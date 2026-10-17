@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.paas.example/events/order.fulfilled.v1.json",
+  "title": "order.fulfilled.v1",
+  "description": "Fulfillment completed for an order.",
+  "x-paas-source": "fulfillment-worker-service",
+  "type": "object",
+  "properties": {
+    "specversion": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._:=-]{8,128}$"
+    },
+    "type": {
+      "const": "order.fulfilled.v1"
+    },
+    "source": {
+      "const": "fulfillment-worker-service"
+    },
+    "time": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+    },
+    "tenantId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{1,63}$"
+    },
+    "tenantTier": {
+      "type": "string",
+      "enum": [
+        "standard",
+        "premium",
+        "enterprise"
+      ]
+    },
+    "correlationId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._:=-]{8,128}$"
+    },
+    "causationId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._:=-]{8,128}$"
+    },
+    "subject": {
+      "type": "string",
+      "maxLength": 256
+    },
+    "datacontenttype": {
+      "type": "string",
+      "const": "application/json"
+    },
+    "deadlineAtMs": {
+      "type": "integer",
+      "exclusiveMinimum": 0,
+      "maximum": 9007199254740991
+    },
+    "data": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "orderId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "fulfilledAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+        },
+        "shipmentRef": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        }
+      },
+      "required": [
+        "orderId",
+        "fulfilledAt",
+        "shipmentRef"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "specversion",
+    "id",
+    "type",
+    "source",
+    "time",
+    "tenantId",
+    "tenantTier",
+    "correlationId",
+    "datacontenttype",
+    "data"
+  ],
+  "additionalProperties": false
+}

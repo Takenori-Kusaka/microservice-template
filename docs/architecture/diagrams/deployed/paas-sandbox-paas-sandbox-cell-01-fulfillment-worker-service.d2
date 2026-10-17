@@ -1,0 +1,77 @@
+FulfillPremiumConsumerFunctionC0168755: FulfillPremium_Consumer_Function{
+  
+ icon: https://icons.terrastruct.com/aws%2FCompute%2FAWS-Lambda_Lambda-Function_light-bg.svg 
+ style.fill:"lightgreen" 
+} 
+ 
+FulfillPremiumDlq56609BDC: FulfillPremium_Dlq{
+  
+ icon: https://icons.terrastruct.com/aws%2FApplication%20Integration%2FAmazon-Simple-Queue-Service-SQS_Queue_light-bg.svg 
+ style.fill:"lightgreen" 
+} 
+ 
+FulfillPremiumQueue667DB9E2: FulfillPremium_Queue{
+  
+ icon: https://icons.terrastruct.com/aws%2FApplication%20Integration%2FAmazon-Simple-Queue-Service-SQS_Queue_light-bg.svg 
+ style.fill:"lightgreen" 
+} 
+ 
+FulfillStandardConsumerFunction78968E87: FulfillStandard_Consumer_Function{
+  
+ icon: https://icons.terrastruct.com/aws%2FCompute%2FAWS-Lambda_Lambda-Function_light-bg.svg 
+ style.fill:"lightgreen" 
+} 
+ 
+FulfillStandardDlq92A63F58: FulfillStandard_Dlq{
+  
+ icon: https://icons.terrastruct.com/aws%2FApplication%20Integration%2FAmazon-Simple-Queue-Service-SQS_Queue_light-bg.svg 
+ style.fill:"lightgreen" 
+} 
+ 
+FulfillStandardQueue5B526C35: FulfillStandard_Queue{
+  
+ icon: https://icons.terrastruct.com/aws%2FApplication%20Integration%2FAmazon-Simple-Queue-Service-SQS_Queue_light-bg.svg 
+ style.fill:"lightgreen" 
+} 
+ 
+IdempotencyTable48612DF4: Idempotency_Table{
+  
+ icon: https://icons.terrastruct.com/aws%2FDatabase%2FAmazon-DynamoDB.svg 
+ style.fill:"lightgreen" 
+} 
+ 
+SubscribePremiumRule89FC77F2: SubscribePremium_Rule{
+  
+ icon: https://icons.terrastruct.com/aws%2FApplication%20Integration%2FAmazon-EventBridge.svg 
+ style.fill:"lightgreen" 
+} 
+ 
+SubscribeStandardRuleDC34C3F5: SubscribeStandard_Rule{
+  
+ icon: https://icons.terrastruct.com/aws%2FApplication%20Integration%2FAmazon-EventBridge.svg 
+ style.fill:"lightgreen" 
+} 
+ 
+
+ FulfillPremiumQueue667DB9E2 -> FulfillPremiumConsumerFunctionC0168755 
+ 
+
+ FulfillPremiumQueue667DB9E2 -> FulfillPremiumDlq56609BDC 
+ 
+
+ SubscribePremiumRule89FC77F2 -> FulfillPremiumQueue667DB9E2 
+ 
+
+ FulfillStandardQueue5B526C35 -> FulfillStandardConsumerFunction78968E87 
+ 
+
+ FulfillStandardQueue5B526C35 -> FulfillStandardDlq92A63F58 
+ 
+
+ SubscribeStandardRuleDC34C3F5 -> FulfillStandardQueue5B526C35 
+ 
+explanation: |md 
+ # paas-sandbox-paas-sandbox-cell-01-fulfillment-worker-service
+- Resources: 44 
+- Ready: 100% 
+| { near: top-left }

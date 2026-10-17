@@ -1,0 +1,47 @@
+{
+  "name": "microservice-template",
+  "version": "0.1.0",
+  "private": true,
+  "description": "B2B multi-tenant PaaS serverless microservice template (TypeScript, AWS CDK, Lambda, EventBridge, SQS, Step Functions)",
+  "packageManager": "pnpm@11.4.0",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint",
+    "lint:fix": "turbo run lint -- --fix",
+    "test": "turbo run test",
+    "test:contract": "vitest run --config vitest.root.config.ts --project contract",
+    "test:integration": "vitest run --config vitest.root.config.ts --project integration",
+    "test:tenant-isolation": "vitest run --config vitest.root.config.ts --project tenant-isolation",
+    "test:resiliency": "vitest run --config vitest.root.config.ts --project resiliency",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "synth": "pnpm --filter @paas/platform-cdk synth",
+    "deploy:sandbox": "pnpm --filter @paas/platform-cdk run deploy \"paas-sandbox/*\" --context env=sandbox",
+    "diff:sandbox": "pnpm --filter @paas/platform-cdk run diff \"paas-sandbox/*\" --context env=sandbox",
+    "schemas:generate": "pnpm --filter @paas/event-contracts generate && pnpm --filter @paas/api-contracts generate",
+    "schemas:check": "pnpm --filter @paas/event-contracts generate:check && pnpm --filter @paas/api-contracts generate:check",
+    "create-service": "tsx tools/create-service/src/cli.ts",
+    "cost-model": "tsx tools/cost-model/src/cli.ts",
+    "diagrams": "tsx tools/diagrams/src/cli.ts",
+    "power-tuning": "tsx tools/power-tuning/src/cli.ts",
+    "verify": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm schemas:check && pnpm synth",
+    "diagrams:deployed": "tsx tools/diagrams/src/cdk2d2-official.ts",
+    "diagrams:awsdac": "tsx tools/diagrams/src/awsdac.ts"
+  },
+  "devDependencies": {
+    "@paas/eslint-config": "workspace:*",
+    "@types/node": "^22.19.0",
+    "esbuild": "^0.28.2",
+    "eslint": "^9.39.5",
+    "prettier": "^3.9.10",
+    "tsx": "^4.23.15",
+    "turbo": "^2.11.9",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.12"
+  },
+  "type": "module"
+}

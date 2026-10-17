@@ -1,0 +1,49 @@
+{
+  "name": "@paas/example-worker-service",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Example async worker: EventBridge → tier-specific SQS queues → Lambda (partial batch failure, DLQ, idempotent consumer)",
+  "type": "module",
+  "exports": {
+    "./infra": {
+      "types": "./infra/worker-service-stack.ts",
+      "default": "./infra/worker-service-stack.ts"
+    },
+    "./handler": {
+      "types": "./src/entrypoints/queue/fulfill-order.ts",
+      "default": "./src/entrypoints/queue/fulfill-order.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint src infra test",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@aws-lambda-powertools/batch": "^2.36.0",
+    "@aws-lambda-powertools/idempotency": "^2.36.0",
+    "@aws-lambda-powertools/logger": "^2.36.0",
+    "@aws-lambda-powertools/metrics": "^2.36.0",
+    "@aws-lambda-powertools/tracer": "^2.36.0",
+    "@aws-sdk/client-dynamodb": "^3.1152.0",
+    "@aws-sdk/client-eventbridge": "^3.1152.0",
+    "@aws-sdk/lib-dynamodb": "^3.1152.0",
+    "@middy/core": "^7.9.2",
+    "@paas/constructs": "workspace:*",
+    "@paas/event-contracts": "workspace:*",
+    "@paas/observability": "workspace:*",
+    "@paas/runtime-context": "workspace:*",
+    "aws-cdk-lib": "^2.273.0",
+    "constructs": "^10.8.1"
+  },
+  "devDependencies": {
+    "@paas/eslint-config": "workspace:*",
+    "@paas/testing": "workspace:*",
+    "@types/aws-lambda": "^8.10.164",
+    "@types/node": "^22.19.0",
+    "aws-sdk-client-mock": "^4.1.0",
+    "eslint": "^9.39.5",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.12"
+  }
+}

@@ -1,0 +1,32 @@
+serviceId: fulfillment-worker-service
+domain: commerce
+ownerTeam: fulfillment-team
+onCall: fulfillment-team-oncall
+repository: https://github.com/Takenori-Kusaka/microservice-template
+dataClassification: confidential
+tenantIsolationModel: pool
+syncContracts: []
+publishedEvents:
+  - order.fulfilled.v1
+  - order.fulfillment-failed.v1
+consumedEvents:
+  - order.created.v1
+slo:
+  availability: 99.9
+  latencyP99Ms: 30000 # async: p99 end-to-end processing latency (queue age + handler)
+  window: 30d
+rto: 2h
+rpo: 15m
+costCenter: CC-COMMERCE-01
+runtimeProfile: event-zip-arm64
+awsAccounts: {}
+regions:
+  - ap-northeast-1
+runbook: docs/runbooks/worker-service.md
+dashboard: auto
+threatModel: docs/threat-models/order-service.md
+adrs:
+  - ADR-0011
+  - ADR-0013
+  - ADR-0014
+  - ADR-0017

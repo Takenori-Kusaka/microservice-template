@@ -1,0 +1,33 @@
+{
+  "version": "2.0",
+  "routeKey": "POST /orders",
+  "rawPath": "/orders",
+  "rawQueryString": "",
+  "headers": {
+    "content-type": "application/json",
+    "idempotency-key": "power-tuning-0001"
+  },
+  "requestContext": {
+    "accountId": "123456789012",
+    "apiId": "tuning",
+    "domainName": "tuning.local",
+    "domainPrefix": "tuning",
+    "http": {
+      "method": "POST",
+      "path": "/orders",
+      "protocol": "HTTP/1.1",
+      "sourceIp": "127.0.0.1",
+      "userAgent": "power-tuning"
+    },
+    "requestId": "tuning-request",
+    "routeKey": "POST /orders",
+    "stage": "$default",
+    "time": "17/Oct/2026:00:00:00 +0000",
+    "timeEpoch": 1792540800000,
+    "authorizer": {
+      "lambda": { "tenantId": "power-tuning", "tenantTier": "standard", "sub": "tuning" }
+    }
+  },
+  "body": "{\"customerRef\":\"tuning\",\"lines\":[{\"sku\":\"SKU-1\",\"quantity\":1,\"unitPrice\":{\"amount\":100,\"currency\":\"JPY\"}}]}",
+  "isBase64Encoded": false
+}

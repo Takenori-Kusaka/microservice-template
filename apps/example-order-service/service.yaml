@@ -1,0 +1,39 @@
+# Service manifest (guideline §3 必須所有メタデータ). Synth fails when a required field is missing.
+serviceId: order-service
+domain: commerce
+ownerTeam: order-team
+onCall: order-team-oncall # PagerDuty / Opsgenie schedule id
+repository: https://github.com/Takenori-Kusaka/microservice-template
+dataClassification: confidential
+tenantIsolationModel: pool
+syncContracts:
+  - schemas/openapi/order-service.yaml
+publishedEvents:
+  - order.created.v1
+consumedEvents:
+  - order.fulfilled.v1
+  - order.fulfillment-failed.v1
+slo:
+  availability: 99.9
+  latencyP99Ms: 500
+  window: 30d
+rto: 1h
+rpo: 5m
+costCenter: CC-COMMERCE-01
+runtimeProfile: event-zip-arm64
+awsAccounts:
+  sandbox: '000000000000'
+  production: '000000000000'
+regions:
+  - ap-northeast-1
+runbook: docs/runbooks/order-service.md
+dashboard: auto
+threatModel: docs/threat-models/order-service.md
+adrs:
+  - ADR-0001
+  - ADR-0005
+  - ADR-0006
+  - ADR-0012
+  - ADR-0013
+  - ADR-0014
+  - ADR-0015

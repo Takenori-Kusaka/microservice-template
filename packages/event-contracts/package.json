@@ -1,0 +1,33 @@
+{
+  "name": "@paas/event-contracts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CloudEvents-style event envelope, typed event schemas, registry and EventBridge/SQS adapters",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint src test scripts",
+    "test": "vitest run",
+    "generate": "tsx scripts/generate-json-schema.ts",
+    "generate:check": "tsx scripts/generate-json-schema.ts --check"
+  },
+  "dependencies": {
+    "@paas/runtime-context": "workspace:*",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@paas/eslint-config": "workspace:*",
+    "@types/aws-lambda": "^8.10.164",
+    "@types/node": "^22.19.0",
+    "eslint": "^9.39.5",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.12"
+  }
+}

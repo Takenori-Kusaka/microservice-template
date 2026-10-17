@@ -1,0 +1,97 @@
+# Account / cell topology (Phase 1 environments and Phase 2 cells)
+# Render: pnpm diagrams (D2 with the TALA layout engine)
+direction: right
+
+org: AWS Organizations {
+  shared: shared services account {
+    ci: pipeline\nGitHub Actions OIDC role
+    logs: central logs\naudit S3 Object Lock {
+      shape: cylinder
+    }
+    sec: Security Hub / GuardDuty\nCloudTrail org trail
+  }
+
+  nonprod: non-prod account {
+    sandbox: sandbox stage\nephemeral pr-N-* stacks
+    development: development stage
+  }
+
+  staging_acct: staging account {
+    staging: staging stage\nproduction-like\nload / chaos tests
+  }
+
+  prod: production account {
+    cp: control plane {
+      registry: tenant registry {
+        shape: cylinder
+      }
+      router: cell router\ntenant -> cellId\n(cached routing)
+      orgbus: org event bus {
+        shape: hexagon
+      }
+      prov: provisioning workflow service
+    }
+
+    cell_a: cell-a (stack or account) {
+      api: order-service
+      worker: worker-service
+      bus: cell bus {
+        shape: hexagon
+      }
+      db: tables {
+        shape: cylinder
+      }
+    }
+
+    cell_b: cell-b (stack or account) {
+      api: order-service
+      worker: worker-service
+      bus: cell bus {
+        shape: hexagon
+      }
+      db: tables {
+        shape: cylinder
+      }
+    }
+  }
+
+  silo: silo tenant-X (dedicated account, Phase 3) {
+    api: order-service
+    worker: worker-service
+    db: tables\ntenant CMK {
+      shape: cylinder
+    }
+  }
+}
+
+client: Client {
+  shape: person
+}
+
+client -> org.prod.cp.router
+org.prod.cp.router -> org.prod.cell_a: tenants 1..N
+org.prod.cp.router -> org.prod.cell_b: tenants N+1..M
+org.prod.cp.router -> org.silo: tenant X
+org.prod.cp.registry -> org.prod.cp.router: read via cache\n(data plane never calls control plane synchronously) {
+  style.stroke-dash: 3
+}
+org.prod.cp.prov -> org.prod.cp.orgbus: tenant.provisioning.requested.v1
+org.prod.cp.orgbus -> org.prod.cell_a.bus: cell placement {
+  style.stroke-dash: 3
+}
+org.prod.cp.orgbus -> org.prod.cell_b.bus: cell placement {
+  style.stroke-dash: 3
+}
+
+org.shared.ci -> org.nonprod: deploy ephemeral / integration
+org.shared.ci -> org.staging_acct: staging deploy / canary
+org.shared.ci -> org.prod: promote (manual approval)
+org.nonprod -> org.shared.logs: logs {
+  style.stroke-dash: 3
+}
+org.staging_acct -> org.shared.logs: logs {
+  style.stroke-dash: 3
+}
+org.prod -> org.shared.logs: logs {
+  style.stroke-dash: 3
+}

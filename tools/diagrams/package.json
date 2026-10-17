@@ -1,0 +1,22 @@
+{
+  "name": "@paas/diagrams",
+  "version": "0.1.0",
+  "private": true,
+  "description": "cdk2d2-style generator: cloud assembly → D2, rendered with D2 + TALA to SVG",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint src",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@d2lang/d2": "^0.1.34"
+  },
+  "devDependencies": {
+    "@paas/eslint-config": "workspace:*",
+    "@types/node": "^22.19.0",
+    "eslint": "^9.39.5",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.12"
+  }
+}

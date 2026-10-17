@@ -1,0 +1,20 @@
+{
+  "name": "@paas/power-tuning",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Runs AWS Lambda Power Tuning against a function and records the result as evidence for memory/architecture decisions",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "@aws-sdk/client-sfn": "^3.1152.0"
+  },
+  "devDependencies": {
+    "@paas/eslint-config": "workspace:*",
+    "@types/node": "^22.19.0",
+    "eslint": "^9.39.5",
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,0 +1,137 @@
+direction: right
+title: |md
+  # PaaS cell topology (sandbox) — generated from cdk.out
+| { near: top-center }
+
+paas_production_paas_production_cell_01_platform: "paas-production-paas-production-cell-01-platform" {
+  EventBus: "cell event bus\n(EventBridge bus)" {
+    shape: diamond
+  }
+  AlarmTopic: "alarm topic\n(SNS)" {
+    shape: oval
+  }
+}
+
+paas_production_paas_production_cell_01_order_service: "paas-production-paas-production-cell-01-order-service" {
+  Orders_Table: "order-service\ntable\n(DynamoDB)" {
+    shape: cylinder
+  }
+  Idempotency_Table: "order-service\nidempotency\n(DynamoDB)" {
+    shape: cylinder
+  }
+  Api_HttpApi: "order-service\nHTTP API\n(API Gateway HTTP API)" {
+    shape: cloud
+  }
+  OutboxRelay_Function: "order-service\nOutboxRelay\n(Lambda)" {
+    shape: hexagon
+  }
+  FulfillmentOutcomes_Dlq: "order-service\nApplyFulfillmentOutcome DLQ\n(SQS)" {
+    shape: queue
+  }
+  FulfillmentOutcomes_Queue: "order-service\nApplyFulfillmentOutcome queue\n(SQS)" {
+    shape: queue
+  }
+  OutcomeSubscription_Rule: "order.fulfilled.v1\norder.fulfillment-failed.v1\n(EventBridge rule)" {
+    shape: parallelogram
+  }
+  Api_FnCreateOrder_Function: "order-service\nCreateOrder\n(Lambda)" {
+    shape: hexagon
+  }
+  Api_FnGetOrder_Function: "order-service\nGetOrder\n(Lambda)" {
+    shape: hexagon
+  }
+  Api_FnListOrders_Function: "order-service\nListOrders\n(Lambda)" {
+    shape: hexagon
+  }
+  FulfillmentOutcomes_Consumer_Function: "order-service\nApplyFulfillmentOutcome\n(Lambda)" {
+    shape: hexagon
+  }
+}
+
+paas_production_paas_production_cell_01_fulfillment_worker_service: "paas-production-paas-production-cell-01-fulfillment-worker-service" {
+  Idempotency_Table: "fulfillment-worker-service\nidempotency\n(DynamoDB)" {
+    shape: cylinder
+  }
+  FulfillStandard_Dlq: "fulfillment-worker-service\nFulfillOrderStandard DLQ\n(SQS)" {
+    shape: queue
+  }
+  FulfillStandard_Queue: "fulfillment-worker-service\nFulfillOrderStandard queue\n(SQS)" {
+    shape: queue
+  }
+  SubscribeStandard_Rule: "order.created.v1\n(EventBridge rule)" {
+    shape: parallelogram
+  }
+  FulfillPremium_Dlq: "fulfillment-worker-service\nFulfillOrderPremium DLQ\n(SQS)" {
+    shape: queue
+  }
+  FulfillPremium_Queue: "fulfillment-worker-service\nFulfillOrderPremium queue\n(SQS)" {
+    shape: queue
+  }
+  SubscribePremium_Rule: "order.created.v1\n(EventBridge rule)" {
+    shape: parallelogram
+  }
+  FulfillStandard_Consumer_Function: "fulfillment-worker-service\nFulfillOrderStandard\n(Lambda)" {
+    shape: hexagon
+  }
+  FulfillPremium_Consumer_Function: "fulfillment-worker-service\nFulfillOrderPremium\n(Lambda)" {
+    shape: hexagon
+  }
+}
+
+paas_production_paas_production_cell_01_provisioning_workflow_service: "paas-production-paas-production-cell-01-provisioning-workflow-service" {
+  Provisioning_Table: "provisioning-workflow-service\ntable\n(DynamoDB)" {
+    shape: cylinder
+  }
+  TaskValidateRequest_Function: "provisioning-workflow-service\nValidateRequest\n(Lambda)" {
+    shape: hexagon
+  }
+  TaskReserveTenantSlot_Function: "provisioning-workflow-service\nReserveTenantSlot\n(Lambda)" {
+    shape: hexagon
+  }
+  TaskProvisionResources_Function: "provisioning-workflow-service\nProvisionResources\n(Lambda)" {
+    shape: hexagon
+  }
+  TaskActivateTenant_Function: "provisioning-workflow-service\nActivateTenant\n(Lambda)" {
+    shape: hexagon
+  }
+  TaskReleaseTenantSlot_Function: "provisioning-workflow-service\nReleaseTenantSlot\n(Lambda)" {
+    shape: hexagon
+  }
+  ProvisioningWorkflow_StateMachine: "provisioning-workflow-service\nworkflow\n(Step Functions)" {
+    shape: step
+  }
+  RequestedSubscription_Rule: "tenant.provisioning-requested.v1\n(EventBridge rule)" {
+    shape: parallelogram
+  }
+}
+
+paas_production_paas_production_cell_01_order_service.Orders_Table -> paas_production_paas_production_cell_01_order_service.OutboxRelay_Function: "Streams (OUTBOX inserts)"
+paas_production_paas_production_cell_01_order_service.Api_HttpApi -> paas_production_paas_production_cell_01_order_service.Api_FnCreateOrder_Function: "POST /orders"
+paas_production_paas_production_cell_01_order_service.Api_HttpApi -> paas_production_paas_production_cell_01_order_service.Api_FnGetOrder_Function: "GET /orders/{orderId}"
+paas_production_paas_production_cell_01_order_service.Api_HttpApi -> paas_production_paas_production_cell_01_order_service.Api_FnListOrders_Function: "GET /orders"
+paas_production_paas_production_cell_01_order_service.OutboxRelay_Function -> external.PlatformEventBus: "order.created.v1"
+paas_production_paas_production_cell_01_order_service.FulfillmentOutcomes_Queue -> paas_production_paas_production_cell_01_order_service.FulfillmentOutcomes_Consumer_Function: "batch 10, maxConcurrency 5"
+paas_production_paas_production_cell_01_order_service.FulfillmentOutcomes_Queue -> paas_production_paas_production_cell_01_order_service.FulfillmentOutcomes_Dlq: "after 5 receives"
+paas_production_paas_production_cell_01_order_service.OutcomeSubscription_Rule -> paas_production_paas_production_cell_01_order_service.FulfillmentOutcomes_Queue
+paas_production_paas_production_cell_01_order_service.Api_FnCreateOrder_Function -> paas_production_paas_production_cell_01_order_service.Orders_Table
+paas_production_paas_production_cell_01_order_service.Api_FnGetOrder_Function -> paas_production_paas_production_cell_01_order_service.Orders_Table
+paas_production_paas_production_cell_01_order_service.Api_FnListOrders_Function -> paas_production_paas_production_cell_01_order_service.Orders_Table
+paas_production_paas_production_cell_01_fulfillment_worker_service.FulfillStandard_Queue -> paas_production_paas_production_cell_01_fulfillment_worker_service.FulfillStandard_Consumer_Function: "batch 10, maxConcurrency 20"
+paas_production_paas_production_cell_01_fulfillment_worker_service.FulfillStandard_Queue -> paas_production_paas_production_cell_01_fulfillment_worker_service.FulfillStandard_Dlq: "after 5 receives"
+paas_production_paas_production_cell_01_fulfillment_worker_service.SubscribeStandard_Rule -> paas_production_paas_production_cell_01_fulfillment_worker_service.FulfillStandard_Queue
+paas_production_paas_production_cell_01_fulfillment_worker_service.FulfillPremium_Queue -> paas_production_paas_production_cell_01_fulfillment_worker_service.FulfillPremium_Consumer_Function: "batch 10, maxConcurrency 50"
+paas_production_paas_production_cell_01_fulfillment_worker_service.FulfillPremium_Queue -> paas_production_paas_production_cell_01_fulfillment_worker_service.FulfillPremium_Dlq: "after 5 receives"
+paas_production_paas_production_cell_01_fulfillment_worker_service.SubscribePremium_Rule -> paas_production_paas_production_cell_01_fulfillment_worker_service.FulfillPremium_Queue
+paas_production_paas_production_cell_01_fulfillment_worker_service.FulfillStandard_Consumer_Function -> external.PlatformEventBus: "order.fulfilled.v1 / fulfillment-failed.v1"
+paas_production_paas_production_cell_01_fulfillment_worker_service.FulfillPremium_Consumer_Function -> external.PlatformEventBus: "order.fulfilled.v1 / fulfillment-failed.v1"
+paas_production_paas_production_cell_01_provisioning_workflow_service.ProvisioningWorkflow_StateMachine -> paas_production_paas_production_cell_01_provisioning_workflow_service.TaskValidateRequest_Function
+paas_production_paas_production_cell_01_provisioning_workflow_service.ProvisioningWorkflow_StateMachine -> paas_production_paas_production_cell_01_provisioning_workflow_service.TaskReserveTenantSlot_Function
+paas_production_paas_production_cell_01_provisioning_workflow_service.ProvisioningWorkflow_StateMachine -> paas_production_paas_production_cell_01_provisioning_workflow_service.TaskProvisionResources_Function
+paas_production_paas_production_cell_01_provisioning_workflow_service.ProvisioningWorkflow_StateMachine -> paas_production_paas_production_cell_01_provisioning_workflow_service.TaskActivateTenant_Function
+paas_production_paas_production_cell_01_provisioning_workflow_service.ProvisioningWorkflow_StateMachine -> paas_production_paas_production_cell_01_provisioning_workflow_service.TaskReleaseTenantSlot_Function
+paas_production_paas_production_cell_01_provisioning_workflow_service.ProvisioningWorkflow_StateMachine -> external.PlatformEventBus: "tenant.provisioned.v1 / provisioning-failed.v1"
+paas_production_paas_production_cell_01_provisioning_workflow_service.RequestedSubscription_Rule -> paas_production_paas_production_cell_01_provisioning_workflow_service.ProvisioningWorkflow_StateMachine
+
+external: "imported / shared" {
+  PlatformEventBus: { shape: cloud }
+}

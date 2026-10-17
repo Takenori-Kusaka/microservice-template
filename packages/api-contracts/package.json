@@ -1,0 +1,34 @@
+{
+  "name": "@paas/api-contracts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "OpenAPI-first API contracts: generated types, request validation schemas, standard error/response shapes",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint src test",
+    "test": "vitest run",
+    "generate": "openapi-typescript ../../schemas/openapi/order-service.yaml -o src/generated/order-service.ts --alphabetize",
+    "generate:check": "tsx scripts/check-generated.ts"
+  },
+  "dependencies": {
+    "@paas/runtime-context": "workspace:*",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@paas/eslint-config": "workspace:*",
+    "@types/aws-lambda": "^8.10.164",
+    "@types/node": "^22.19.0",
+    "eslint": "^9.39.5",
+    "openapi-typescript": "^7.13.0",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.12"
+  }
+}

@@ -1,0 +1,14 @@
+# Ownership is enforced in two places: service.yaml (synth-time) and here (review-time).
+# Replace the placeholder teams with real GitHub teams.
+*                                   @Takenori-Kusaka
+/packages/constructs/               @Takenori-Kusaka   # platform-team
+/packages/runtime-context/          @Takenori-Kusaka   # platform-team
+/packages/observability/            @Takenori-Kusaka   # platform-team
+/packages/event-contracts/          @Takenori-Kusaka   # platform-team + every producing team
+/schemas/                           @Takenori-Kusaka   # contract changes need platform review
+/apps/platform-cdk/                 @Takenori-Kusaka   # platform-team
+/apps/example-order-service/        @Takenori-Kusaka   # order-team
+/apps/example-worker-service/       @Takenori-Kusaka   # fulfillment-team
+/apps/example-workflow-service/     @Takenori-Kusaka   # platform-team
+/docs/adr/                          @Takenori-Kusaka   # architecture review board
+/docs/microservice-guidelines.md    @Takenori-Kusaka   # architecture review board

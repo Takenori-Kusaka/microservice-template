@@ -1,0 +1,100 @@
+# Request flow: CloudFront/WAF -> API Gateway -> Lambda -> DynamoDB -> Streams
+# -> outbox relay -> EventBridge -> SQS -> Lambda -> Step Functions
+# Render: pnpm diagrams --layout tala
+direction: right
+
+client: "Client" {
+  shape: person
+}
+
+edge: "Edge" {
+  cloudfront: "CloudFront + WAF" {
+    shape: rectangle
+  }
+}
+
+order: "example-order-service (API)" {
+  apigw: "API Gateway HTTP API\nJWT authorizer\nstage/route throttle" {
+    shape: rectangle
+  }
+  create_fn: "Lambda createOrder\nObservableFunction\nPowertools Idempotency" {
+    shape: rectangle
+  }
+  idem_table: "Idempotency table\ntenantId + Idempotency-Key" {
+    shape: cylinder
+  }
+  orders_table: "orders table\nTenantAwareTable\npk=TENANT<id> sk=ORDER<id>" {
+    shape: cylinder
+  }
+  streams: "DynamoDB Streams" {
+    shape: queue
+  }
+  relay_fn: "Lambda outbox relay\nObservableFunction" {
+    shape: rectangle
+  }
+
+  apigw -> create_fn: "claims tenant_id, tenant_tier, sub"
+  create_fn <-> idem_table: "saveInProgress / saveSuccess"
+  create_fn -> orders_table: "TransactWriteItems\norder + OUTBOX item"
+  orders_table -> streams: "INSERT"
+  streams -> relay_fn: "batch (ReportBatchItemFailures)"
+}
+
+bus: "control plane" {
+  eventbridge: "EventBridge bus\npaas-env-cell-bus" {
+    shape: hexagon
+  }
+}
+
+worker: "example-worker-service (worker)" {
+  rule: "EventSubscription\nrule order.created.v1" {
+    shape: rectangle
+  }
+  q_std: "SQS standard-tier\nmaxConcurrency 20" {
+    shape: queue
+  }
+  q_prm: "SQS premium-tier\nmaxConcurrency 50" {
+    shape: queue
+  }
+  dlq: "DLQ (14 days)" {
+    shape: queue
+  }
+  fulfill_fn: "Lambda fulfill\nBatchProcessor\npartial batch failure" {
+    shape: rectangle
+  }
+
+  rule -> q_std: "tenantTier=standard"
+  rule -> q_prm: "tenantTier=premium"
+  q_std -> fulfill_fn
+  q_prm -> fulfill_fn
+  q_std -> dlq: "maxReceiveCount 5" {
+    style.stroke-dash: 3
+  }
+  q_prm -> dlq: "maxReceiveCount 5" {
+    style.stroke-dash: 3
+  }
+}
+
+workflow: "example-workflow-service (workflow)" {
+  rule2: "EventSubscription\nrule tenant.provisioning.requested.v1" {
+    shape: rectangle
+  }
+  sfn: "Step Functions Standard\nPavedWorkflow\nvalidate > reserve > provision > activate" {
+    shape: rectangle
+  }
+  comp: "compensation\nrelease / revoke" {
+    shape: rectangle
+  }
+
+  rule2 -> sfn: "StartExecution"
+  sfn -> comp: "Catch" {
+    style.stroke-dash: 3
+  }
+}
+
+client -> edge.cloudfront: "POST /orders\nIdempotency-Key"
+edge.cloudfront -> order.apigw
+order.relay_fn -> bus.eventbridge: "PutEvents\nEventEnvelope order.created.v1"
+bus.eventbridge -> worker.rule
+worker.fulfill_fn -> bus.eventbridge: "order.fulfilled.v1 /\nfulfillment.failed.v1"
+bus.eventbridge -> workflow.rule2

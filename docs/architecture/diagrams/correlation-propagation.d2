@@ -1,0 +1,99 @@
+# Correlation ID propagation across sync and async hops
+# correlationId is one per business flow; causationId links parent -> child;
+# traceId (X-Ray) is sampled and rooted at the Lambda (HTTP API has no X-Ray segment)
+# Render: pnpm diagrams (D2 with the TALA layout engine)
+direction: right
+
+client: Client {
+  shape: person
+}
+
+apigw: API Gateway HTTP API {
+  note: |md
+    generates requestId
+    validates JWT -> claims
+    no X-Ray segment
+  |
+}
+
+create_fn: createOrder Lambda {
+  ctx: |md
+    ExecutionContext
+    - tenantId / tenantTier (claims)
+    - requestId = req-1
+    - correlationId = corr-1 (verify or generate)
+    - traceId = X-Ray root (active tracing)
+    - idempotencyKey = k1
+    - cellId, deadline
+  |
+}
+
+idem: Idempotency table\nkey = tenantId + k1 {
+  shape: cylinder
+}
+
+orders: orders table + Streams {
+  shape: cylinder
+  note: |md
+    OUTBOX item
+    id = evt-1
+    correlationId = corr-1
+    causationId = req-1
+  |
+}
+
+relay: outbox relay Lambda {
+  note: |md
+    ExecutionContext from OUTBOX item
+    new X-Ray segment (Streams hop)
+    correlationId joins the logs
+  |
+}
+
+eb: EventBridge {
+  shape: hexagon
+  note: |md
+    detail = EventEnvelope
+    id = evt-1
+    type = order.created.v1
+    correlationId = corr-1
+    causationId = req-1
+    + X-Ray trace header
+  |
+}
+
+sqs: SQS tier queue {
+  shape: queue
+}
+
+fulfill: fulfill Lambda {
+  note: |md
+    ExecutionContext from envelope
+    correlationId = corr-1
+    causationId = evt-1
+    idempotent on eventId = evt-1
+    X-Ray auto-linked from SQS
+  |
+}
+
+sfn: Step Functions {
+  note: |md
+    input.context
+    - correlationId
+    - tenantId / tenantTier
+    trace header passed explicitly
+    each Task restores ExecutionContext
+  |
+}
+
+client -> apigw: POST /orders\nX-Correlation-Id (optional)\nIdempotency-Key k1
+apigw -> create_fn: requestId + claims
+create_fn -> idem: saveInProgress / saveSuccess
+create_fn -> orders: TransactWrite(order, OUTBOX)
+create_fn -> client: 201 + requestId=req-1
+orders -> relay: stream record
+relay -> eb: PutEvents
+eb -> sqs: rule match (tenantTier)
+sqs -> fulfill: batch
+fulfill -> eb: order.fulfilled.v1\nid = evt-2\ncorrelationId = corr-1\ncausationId = evt-1
+eb -> sfn: tenant.provisioning.requested.v1\n(separate flow, same envelope rules)

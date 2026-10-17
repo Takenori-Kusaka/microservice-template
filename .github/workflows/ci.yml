@@ -1,0 +1,140 @@
+# Standard pipeline (guideline §18 CI/CD):
+# format → lint → typecheck → unit → contract → synth → policy → deploy ephemeral → integration → load smoke → canary → promote
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  id-token: write # OIDC for deploy jobs
+
+env:
+  NODE_VERSION: 22
+
+jobs:
+  quality-gates:
+    name: format · lint · typecheck · unit · contract · synth · policy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: format
+        run: pnpm format:check
+      - name: lint
+        run: pnpm lint
+      - name: typecheck
+        run: pnpm typecheck
+      - name: unit
+        run: pnpm test
+      - name: contract (event schemas, OpenAPI compatibility)
+        run: pnpm schemas:check && pnpm test:contract
+      - name: resiliency (fault injection, no AWS)
+        run: pnpm test:resiliency
+      - name: ownership metadata (service.yaml) and docs presence
+        run: |
+          for f in apps/*/service.yaml; do
+            dir=$(dirname "$f")
+            for key in ownerTeam onCall slo runbook threatModel adrs; do
+              grep -q "^$key:" "$f" || { echo "::error file=$f::missing $key"; exit 1; }
+            done
+            runbook=$(grep '^runbook:' "$f" | awk '{print $2}')
+            test -f "$runbook" || { echo "::error file=$f::runbook $runbook not found"; exit 1; }
+          done
+      - name: synth + policy (cdk-nag, wildcard IAM, public exposure, retain policies)
+        run: pnpm synth --context env=production
+        env:
+          CDK_DEFAULT_ACCOUNT: '123456789012'
+          CDK_DEFAULT_REGION: ap-northeast-1
+      - name: cfn-lint (CloudFormation spec validation of every synthesized template)
+        run: |
+          pip install --quiet cfn-lint
+          cfn-lint --regions ap-northeast-1 --ignore-checks W3005 -t apps/platform-cdk/cdk.out/assembly-*/*.template.json
+      - name: diagrams (generated from cloud assembly)
+        run: pnpm diagrams --env production --layout tala
+        env:
+          CDK_DEFAULT_ACCOUNT: '123456789012'
+          CDK_DEFAULT_REGION: ap-northeast-1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cloud-assembly-and-diagrams
+          path: |
+            apps/platform-cdk/cdk.out
+            docs/architecture/diagrams/**/*.svg
+          retention-days: 7
+
+  deploy-ephemeral:
+    name: deploy ephemeral · integration · tenant isolation · load smoke
+    needs: quality-gates
+    if: github.event_name == 'pull_request' && vars.PAAS_SANDBOX_ROLE_ARN != ''
+    runs-on: ubuntu-latest
+    environment: sandbox
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.PAAS_SANDBOX_ROLE_ARN }}
+          aws-region: ap-northeast-1
+      - name: deploy (ephemeral cell per PR)
+        run: pnpm --filter @paas/platform-cdk run deploy "paas-sandbox/*" --context env=sandbox --context cell=pr-${{ github.event.number }} --outputs-file outputs.json
+      - name: integration + tenant isolation
+        run: |
+          export PAAS_API_URL=$(node -e "const o=require('./outputs.json');const s=Object.keys(o).find(k=>k.includes('order-service'));console.log(Object.entries(o[s]).find(([k])=>k.startsWith('ApiApiUrl'))[1])")
+          pnpm test:integration && pnpm test:tenant-isolation
+      - name: load smoke (k6, 60s)
+        uses: grafana/k6-action@v0.3.1
+        with:
+          filename: tests/performance/order-api.k6.js
+          flags: --duration 60s --vus 10
+        env:
+          PAAS_API_URL: ${{ env.PAAS_API_URL }}
+      - name: destroy ephemeral cell
+        if: always()
+        run: pnpm --filter @paas/platform-cdk run destroy "paas-sandbox/*" --force --context env=sandbox --context cell=pr-${{ github.event.number }}
+
+  promote:
+    name: canary deploy to staging → production
+    needs: quality-gates
+    if: github.ref == 'refs/heads/main' && vars.PAAS_STAGING_ROLE_ARN != ''
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 1
+      matrix:
+        env: [staging, production]
+    environment: ${{ matrix.env }} # protected environments gate production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ matrix.env == 'production' && vars.PAAS_PRODUCTION_ROLE_ARN || vars.PAAS_STAGING_ROLE_ARN }}
+          aws-region: ap-northeast-1
+      # Same artifact promoted across environments: CDK assets are content-addressed, and
+      # Lambda alias traffic shifting (CodeDeploy canary/linear) rolls back on alarm.
+      - run: pnpm --filter @paas/platform-cdk run deploy "paas-${{ matrix.env }}/*" --context env=${{ matrix.env }}
+        env:
+          PAAS_JWT_ISSUER: ${{ vars.PAAS_JWT_ISSUER }}
+          PAAS_JWT_AUDIENCE: ${{ vars.PAAS_JWT_AUDIENCE }}
+          PAAS_ALARM_EMAIL: ${{ vars.PAAS_ALARM_EMAIL }}

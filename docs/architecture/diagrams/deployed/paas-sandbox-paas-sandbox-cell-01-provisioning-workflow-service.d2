@@ -1,0 +1,71 @@
+ProvisioningTable79588323: Provisioning_Table{
+  
+ icon: https://icons.terrastruct.com/aws%2FDatabase%2FAmazon-DynamoDB.svg 
+ style.fill:"lightgreen" 
+} 
+ 
+ProvisioningWorkflowStateMachineF859875F: ProvisioningWorkflow_StateMachine{
+  
+ icon: https://icons.terrastruct.com/aws%2FApplication%20Integration%2FAWS-Step-Functions_light-bg.svg 
+ style.fill:"lightgreen" 
+} 
+ 
+RequestedSubscriptionRuleF624A3C7: RequestedSubscription_Rule{
+  
+ icon: https://icons.terrastruct.com/aws%2FApplication%20Integration%2FAmazon-EventBridge.svg 
+ style.fill:"lightgreen" 
+} 
+ 
+TaskActivateTenantFunction4F5A16A8: TaskActivateTenant_Function{
+  
+ icon: https://icons.terrastruct.com/aws%2FCompute%2FAWS-Lambda_Lambda-Function_light-bg.svg 
+ style.fill:"lightgreen" 
+} 
+ 
+TaskProvisionResourcesFunctionB3196792: TaskProvisionResources_Function{
+  
+ icon: https://icons.terrastruct.com/aws%2FCompute%2FAWS-Lambda_Lambda-Function_light-bg.svg 
+ style.fill:"lightgreen" 
+} 
+ 
+TaskReleaseTenantSlotFunctionCE3FE05E: TaskReleaseTenantSlot_Function{
+  
+ icon: https://icons.terrastruct.com/aws%2FCompute%2FAWS-Lambda_Lambda-Function_light-bg.svg 
+ style.fill:"lightgreen" 
+} 
+ 
+TaskReserveTenantSlotFunction097D4B9E: TaskReserveTenantSlot_Function{
+  
+ icon: https://icons.terrastruct.com/aws%2FCompute%2FAWS-Lambda_Lambda-Function_light-bg.svg 
+ style.fill:"lightgreen" 
+} 
+ 
+TaskValidateRequestFunction15A76352: TaskValidateRequest_Function{
+  
+ icon: https://icons.terrastruct.com/aws%2FCompute%2FAWS-Lambda_Lambda-Function_light-bg.svg 
+ style.fill:"lightgreen" 
+} 
+ 
+
+ ProvisioningWorkflowStateMachineF859875F -> TaskValidateRequestFunction15A76352 
+ 
+
+ ProvisioningWorkflowStateMachineF859875F -> TaskReserveTenantSlotFunction097D4B9E 
+ 
+
+ ProvisioningWorkflowStateMachineF859875F -> TaskProvisionResourcesFunctionB3196792 
+ 
+
+ ProvisioningWorkflowStateMachineF859875F -> TaskActivateTenantFunction4F5A16A8 
+ 
+
+ ProvisioningWorkflowStateMachineF859875F -> TaskReleaseTenantSlotFunctionCE3FE05E 
+ 
+
+ RequestedSubscriptionRuleF624A3C7 -> ProvisioningWorkflowStateMachineF859875F 
+ 
+explanation: |md 
+ # paas-sandbox-paas-sandbox-cell-01-provisioning-workflow-service
+- Resources: 62 
+- Ready: 100% 
+| { near: top-left }

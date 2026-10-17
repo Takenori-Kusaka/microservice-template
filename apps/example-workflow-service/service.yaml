@@ -1,0 +1,31 @@
+serviceId: provisioning-workflow-service
+domain: tenant-lifecycle
+ownerTeam: platform-team
+onCall: platform-team-oncall
+repository: https://github.com/Takenori-Kusaka/microservice-template
+dataClassification: internal
+tenantIsolationModel: pool
+syncContracts: []
+publishedEvents:
+  - tenant.provisioned.v1
+  - tenant.provisioning-failed.v1
+consumedEvents:
+  - tenant.provisioning-requested.v1
+slo:
+  availability: 99.5
+  latencyP99Ms: 300000 # p99 end-to-end provisioning time (5 min)
+  window: 30d
+rto: 4h
+rpo: 1h
+costCenter: CC-PLATFORM-01
+runtimeProfile: event-zip-arm64
+awsAccounts: {}
+regions:
+  - ap-northeast-1
+runbook: docs/runbooks/workflow-service.md
+dashboard: auto
+threatModel: docs/threat-models/order-service.md
+adrs:
+  - ADR-0010
+  - ADR-0011
+  - ADR-0015

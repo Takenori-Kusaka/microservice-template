@@ -1,0 +1,16 @@
+node_modules/
+dist/
+cdk.out/
+coverage/
+.turbo/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+Thumbs.db
+cdk.context.json
+tests/performance/results/
+tools/diagrams/.bin/
+tools/diagrams/.cdk2d2-assembly/

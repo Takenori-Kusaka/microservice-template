@@ -1,0 +1,107 @@
+ApiFnCreateOrderFunction1F572556: Api_FnCreateOrder_Function{
+  
+ icon: https://icons.terrastruct.com/aws%2FCompute%2FAWS-Lambda_Lambda-Function_light-bg.svg 
+ style.fill:"lightgreen" 
+} 
+ 
+ApiFnGetOrderFunction25453CEF: Api_FnGetOrder_Function{
+  
+ icon: https://icons.terrastruct.com/aws%2FCompute%2FAWS-Lambda_Lambda-Function_light-bg.svg 
+ style.fill:"lightgreen" 
+} 
+ 
+ApiFnListOrdersFunctionE0B3D0A9: Api_FnListOrders_Function{
+  
+ icon: https://icons.terrastruct.com/aws%2FCompute%2FAWS-Lambda_Lambda-Function_light-bg.svg 
+ style.fill:"lightgreen" 
+} 
+ 
+ApiHttpApi4C294DC0: Api_HttpApi{
+  
+ icon: https://icons.terrastruct.com/aws%2FNetworking%20&%20Content%20Delivery%2FAmazon-API-Gateway_light-bg.svg 
+ style.fill:"lightgreen" 
+} 
+ 
+ApiSandboxAuthorizerFunction72074A88: Api_SandboxAuthorizer_Function{
+  
+ icon: https://icons.terrastruct.com/aws%2FCompute%2FAWS-Lambda_Lambda-Function_light-bg.svg 
+ style.fill:"lightgreen" 
+} 
+ 
+FulfillmentOutcomesConsumerFunction0451F84E: FulfillmentOutcomes_Consumer_Function{
+  
+ icon: https://icons.terrastruct.com/aws%2FCompute%2FAWS-Lambda_Lambda-Function_light-bg.svg 
+ style.fill:"lightgreen" 
+} 
+ 
+FulfillmentOutcomesDlq7E42CF0F: FulfillmentOutcomes_Dlq{
+  
+ icon: https://icons.terrastruct.com/aws%2FApplication%20Integration%2FAmazon-Simple-Queue-Service-SQS_Queue_light-bg.svg 
+ style.fill:"lightgreen" 
+} 
+ 
+FulfillmentOutcomesQueue23E21465: FulfillmentOutcomes_Queue{
+  
+ icon: https://icons.terrastruct.com/aws%2FApplication%20Integration%2FAmazon-Simple-Queue-Service-SQS_Queue_light-bg.svg 
+ style.fill:"lightgreen" 
+} 
+ 
+IdempotencyTable48612DF4: Idempotency_Table{
+  
+ icon: https://icons.terrastruct.com/aws%2FDatabase%2FAmazon-DynamoDB.svg 
+ style.fill:"lightgreen" 
+} 
+ 
+OrdersTable1F8332C7: Orders_Table{
+  
+ icon: https://icons.terrastruct.com/aws%2FDatabase%2FAmazon-DynamoDB.svg 
+ style.fill:"lightgreen" 
+} 
+ 
+OutboxRelayFunction3317583E: OutboxRelay_Function{
+  
+ icon: https://icons.terrastruct.com/aws%2FCompute%2FAWS-Lambda_Lambda-Function_light-bg.svg 
+ style.fill:"lightgreen" 
+} 
+ 
+OutcomeSubscriptionRule8044C0CB: OutcomeSubscription_Rule{
+  
+ icon: https://icons.terrastruct.com/aws%2FApplication%20Integration%2FAmazon-EventBridge.svg 
+ style.fill:"lightgreen" 
+} 
+ 
+
+ OrdersTable1F8332C7 -> OutboxRelayFunction3317583E 
+ 
+
+ OutcomeSubscriptionRule8044C0CB -> FulfillmentOutcomesQueue23E21465 
+ 
+
+ ApiFnCreateOrderFunction1F572556 -> OrdersTable1F8332C7 
+ 
+
+ ApiHttpApi4C294DC0 -> ApiFnCreateOrderFunction1F572556 
+ 
+
+ ApiHttpApi4C294DC0 -> ApiFnGetOrderFunction25453CEF 
+ 
+
+ ApiHttpApi4C294DC0 -> ApiFnListOrdersFunctionE0B3D0A9 
+ 
+
+ ApiFnListOrdersFunctionE0B3D0A9 -> OrdersTable1F8332C7 
+ 
+
+ FulfillmentOutcomesQueue23E21465 -> FulfillmentOutcomesConsumerFunction0451F84E 
+ 
+
+ FulfillmentOutcomesQueue23E21465 -> FulfillmentOutcomesDlq7E42CF0F 
+ 
+
+ ApiFnGetOrderFunction25453CEF -> OrdersTable1F8332C7 
+ 
+explanation: |md 
+ # paas-sandbox-paas-sandbox-cell-01-order-service
+- Resources: 90 
+- Ready: 100% 
+| { near: top-left }

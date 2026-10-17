@@ -1,0 +1,70 @@
+# Backstage-compatible catalog (guideline §3 必須所有メタデータ; Spotify "ownership information is
+# automatically captured in our service/software catalog"). Service-level entities derive from
+# each apps/*/service.yaml.
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: paas-microservice-template
+  description: B2B multi-tenant PaaS serverless microservice template (AWS CDK, Lambda, EventBridge, SQS, Step Functions)
+  links:
+    - url: docs/microservice-guidelines.md
+      title: Design guidelines
+    - url: docs/adr/README.md
+      title: ADRs
+    - url: docs/review/README.md
+      title: Review kit
+spec:
+  owner: platform-team
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: order-service
+  description: Order bounded context (HTTP API + DynamoDB + outbox → EventBridge)
+  annotations:
+    paas.example/service-manifest: apps/example-order-service/service.yaml
+spec:
+  type: service
+  lifecycle: experimental
+  owner: order-team
+  system: paas-microservice-template
+  providesApis: [order-service-api]
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: order-service-api
+spec:
+  type: openapi
+  lifecycle: experimental
+  owner: order-team
+  system: paas-microservice-template
+  definition:
+    $text: ./schemas/openapi/order-service.yaml
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: fulfillment-worker-service
+  description: Async fulfillment worker (EventBridge → tier queues → Lambda)
+  annotations:
+    paas.example/service-manifest: apps/example-worker-service/service.yaml
+spec:
+  type: service
+  lifecycle: experimental
+  owner: fulfillment-team
+  system: paas-microservice-template
+  dependsOn: [component:order-service]
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: provisioning-workflow-service
+  description: Tenant provisioning saga (Step Functions Standard with compensation)
+  annotations:
+    paas.example/service-manifest: apps/example-workflow-service/service.yaml
+spec:
+  type: service
+  lifecycle: experimental
+  owner: platform-team
+  system: paas-microservice-template

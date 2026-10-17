@@ -1,0 +1,51 @@
+{
+  "input": {
+    "lambdaARN": "arn:aws:lambda:ap-northeast-1:443370718249:function:paas-sandbox-paas-sandbox-ApiFnListOrdersFunctionE-4n8nidHEe4EJ",
+    "powerValues": [256, 512, 1024, 1536, 2048],
+    "num": 30,
+    "payload": {
+      "version": "2.0",
+      "routeKey": "GET /orders",
+      "rawPath": "/orders",
+      "rawQueryString": "limit=20",
+      "headers": {
+        "content-type": "application/json",
+        "x-correlation-id": "power-tuning-list-0001"
+      },
+      "queryStringParameters": {
+        "limit": "20"
+      },
+      "requestContext": {
+        "accountId": "123456789012",
+        "apiId": "tuning",
+        "domainName": "tuning.local",
+        "domainPrefix": "tuning",
+        "http": {
+          "method": "GET",
+          "path": "/orders",
+          "protocol": "HTTP/1.1",
+          "sourceIp": "127.0.0.1",
+          "userAgent": "power-tuning"
+        },
+        "requestId": "tuning-list-request",
+        "routeKey": "GET /orders",
+        "stage": "$default",
+        "time": "18/Oct/2026:00:00:00 +0000",
+        "timeEpoch": 1792627200000,
+        "authorizer": {
+          "lambda": {
+            "tenantId": "perf-a",
+            "tenantTier": "standard",
+            "sub": "tuning"
+          }
+        }
+      },
+      "isBase64Encoded": false
+    },
+    "parallelInvocation": true,
+    "strategy": "balanced",
+    "includeOutputResults": false
+  },
+  "output": {},
+  "recordedAt": "2026-10-17T22:56:00.022Z"
+}

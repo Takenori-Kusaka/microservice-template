@@ -1,0 +1,26 @@
+{
+  "name": "@paas/tests",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cross-cutting suites: contract, integration, tenant isolation, resiliency (run from the repo root via vitest.root.config.ts)",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint . --ignore-pattern performance"
+  },
+  "dependencies": {
+    "@paas/api-contracts": "workspace:*",
+    "@paas/event-contracts": "workspace:*",
+    "@paas/example-worker-service": "workspace:*",
+    "@paas/runtime-context": "workspace:*",
+    "@paas/testing": "workspace:*",
+    "yaml": "^2.8.0"
+  },
+  "devDependencies": {
+    "@paas/eslint-config": "workspace:*",
+    "@types/node": "^22.19.0",
+    "eslint": "^9.39.5",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.12"
+  }
+}

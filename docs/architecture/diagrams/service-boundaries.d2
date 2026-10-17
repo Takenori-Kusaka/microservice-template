@@ -1,0 +1,129 @@
+# Service boundaries and allowed dependencies (guideline chapter 4 / 17)
+# Arrows are public contracts only. Only the owning service touches its datastore.
+# Render: pnpm diagrams --layout tala
+direction: right
+
+platform: "platform (apps/platform-cdk)" {
+  authorizer: "JWT issuer / authorizer config" {
+    shape: rectangle
+  }
+  bus: "EventBridge bus" {
+    shape: hexagon
+  }
+  registry: "tenant registry" {
+    shape: cylinder
+  }
+  guardrails: "PlatformGuardrails aspect\ncdk-nag + wildcard IAM\n+ unencrypted + missing alarm" {
+    shape: rectangle
+  }
+}
+
+order: "example-order-service" {
+  owner: "ownerTeam team-commerce\nSLO 99.9% / p99 800ms" {
+    shape: text
+  }
+  api: "PavedApiService\nPOST/GET /orders" {
+    shape: rectangle
+  }
+  db: "orders table\nTenantAwareTable" {
+    shape: cylinder
+  }
+  relay: "outbox relay" {
+    shape: rectangle
+  }
+  api -> db
+  db -> relay: "Streams"
+}
+
+worker: "example-worker-service" {
+  owner: "ownerTeam team-commerce\nage SLO premium 60s / standard 300s" {
+    shape: text
+  }
+  sub: "EventSubscription" {
+    shape: rectangle
+  }
+  q: "PavedQueueConsumer\nstandard / premium" {
+    shape: queue
+  }
+  fn: "fulfill Lambda" {
+    shape: rectangle
+  }
+  state: "fulfillment state" {
+    shape: cylinder
+  }
+  sub -> q
+  q -> fn
+  fn -> state
+}
+
+workflow: "example-workflow-service (control plane)" {
+  owner: "ownerTeam platform-team\nsuccess rate 99%" {
+    shape: text
+  }
+  sub: "EventSubscription" {
+    shape: rectangle
+  }
+  sfn: "PavedWorkflow\ntenant provisioning saga" {
+    shape: rectangle
+  }
+  state: "saga state" {
+    shape: cylinder
+  }
+  sub -> sfn
+  sfn -> state
+}
+
+packages: "shared packages (cross-cutting only)" {
+  rc: "@paas/runtime-context" {
+    shape: rectangle
+  }
+  obs: "@paas/observability" {
+    shape: rectangle
+  }
+  ec: "@paas/event-contracts" {
+    shape: rectangle
+  }
+  ac: "@paas/api-contracts" {
+    shape: rectangle
+  }
+  con: "@paas/constructs" {
+    shape: rectangle
+  }
+}
+
+forbidden: "forbidden dependencies" {
+  style.stroke: red
+  style.font-color: red
+  x1: "worker reads orders table directly" {
+    shape: rectangle
+    style.stroke: red
+  }
+  x2: "workflow writes orders table directly" {
+    shape: rectangle
+    style.stroke: red
+  }
+  x3: "business logic inside @paas/* packages" {
+    shape: rectangle
+    style.stroke: red
+  }
+}
+
+order.relay -> platform.bus: "order.created.v1"
+platform.bus -> worker.sub: "order.created.v1"
+worker.fn -> platform.bus: "order.fulfilled.v1 /\nfulfillment.failed.v1"
+platform.bus -> workflow.sub: "tenant.provisioning.requested.v1"
+workflow.sfn -> order.api: "public API / command only\n(never the orders table)" {
+  style.stroke-dash: 3
+}
+platform.authorizer -> order.api: "issuer / audience via SSM" {
+  style.stroke-dash: 3
+}
+platform.guardrails -> order: "synth check" {
+  style.stroke-dash: 3
+}
+platform.guardrails -> worker: "synth check" {
+  style.stroke-dash: 3
+}
+platform.guardrails -> workflow: "synth check" {
+  style.stroke-dash: 3
+}

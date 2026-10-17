@@ -1,0 +1,22 @@
+{
+  "name": "@paas/create-service",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Golden-path generator: pnpm create-service --name <id> --type api|worker|workflow",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint src",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "yaml": "^2.8.0"
+  },
+  "devDependencies": {
+    "@paas/eslint-config": "workspace:*",
+    "@types/node": "^22.19.0",
+    "eslint": "^9.39.5",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.12"
+  }
+}

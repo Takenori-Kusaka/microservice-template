@@ -1,0 +1,29 @@
+{
+  "name": "@paas/runtime-context",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Tenant / correlation / deadline execution context shared by every Lambda handler",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint src test",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "ulid": "^3.0.2"
+  },
+  "devDependencies": {
+    "@paas/eslint-config": "workspace:*",
+    "@types/aws-lambda": "^8.10.164",
+    "@types/node": "^22.19.0",
+    "eslint": "^9.39.5",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.12"
+  }
+}

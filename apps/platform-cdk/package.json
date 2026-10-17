@@ -1,0 +1,35 @@
+{
+  "name": "@paas/platform-cdk",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CDK app: environment stage → platform stack (event bus, alarms) → cell → service stacks",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint bin lib test",
+    "test": "vitest run",
+    "synth": "cdk synth --app \"npx tsx bin/app.ts\" --quiet",
+    "diff": "cdk diff --app \"npx tsx bin/app.ts\"",
+    "deploy": "cdk deploy --app \"npx tsx bin/app.ts\" --require-approval never",
+    "destroy": "cdk destroy --app \"npx tsx bin/app.ts\""
+  },
+  "dependencies": {
+    "@paas/constructs": "workspace:*",
+    "@paas/example-order-service": "workspace:*",
+    "@paas/example-worker-service": "workspace:*",
+    "@paas/example-workflow-service": "workspace:*",
+    "aws-cdk-lib": "^2.273.0",
+    "cdk-nag": "^2.38.2",
+    "constructs": "^10.8.1"
+  },
+  "devDependencies": {
+    "@paas/eslint-config": "workspace:*",
+    "@types/node": "^22.19.0",
+    "aws-cdk": "^2.1145.0",
+    "esbuild": "^0.28.2",
+    "eslint": "^9.39.5",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.12"
+  }
+}

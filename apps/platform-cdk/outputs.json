@@ -1,0 +1,16 @@
+{
+  "paas-sandbox-paas-sandbox-cell-01-platform": {
+    "EventBusName": "paas-sandbox-cell-01-bus",
+    "AlarmTopicArn": "arn:aws:sns:ap-northeast-1:443370718249:paas-sandbox-cell-01-alarms"
+  },
+  "paas-sandbox-paas-sandbox-cell-01-order-service": {
+    "ApiApiUrlF2D81078": "https://126rmvhpxl.execute-api.ap-northeast-1.amazonaws.com/",
+    "ServiceOwner": "order-team (order-team-oncall)"
+  },
+  "paas-sandbox-paas-sandbox-cell-01-fulfillment-worker-service": {
+    "ServiceOwner": "fulfillment-team (fulfillment-team-oncall)"
+  },
+  "paas-sandbox-paas-sandbox-cell-01-provisioning-workflow-service": {
+    "ServiceOwner": "platform-team (platform-team-oncall)"
+  }
+}
