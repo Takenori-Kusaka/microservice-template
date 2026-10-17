@@ -87,6 +87,23 @@ Step Functions を **許容するのではなく、明示的オーケストレ�
 - 受入基準「dependency timeout、throttle、poison message、DLQ、workflow compensation を試験できる」を `tests/resiliency/workflow-compensation/` で検証する。`apps/example-workflow-service` の provisioning saga に対し、ステップ 3 で下流 API に 503 を注入し、補償がステップ 2 → 1 の逆順で実行され、最終状態が `ROLLED_BACK` になることを integration test で確認する。
 - 受入基準「API → ... → Step Functions を `correlationId` で全件検索できる」を ADR-0015 の trace test で確認する。
 
+### 実測（2026-10-18 sandbox、provisioning workflow の game day）
+
+ap-northeast-1 `paas-sandbox-cell-01` の `apps/example-workflow-service`（`PavedWorkflow`、Standard）。2026-10-18 08:05 JST に `aws events put-events` で bus `paas-sandbox-cell-01-bus` へ `tenant.provisioning-requested.v1` を 3 件発行し、Step Functions の execution history と provisioning table の scan で結果を確認した。失敗は `src/tasks/provision.ts` のシミュレーション（cellId `cell-full` = 恒久失敗、`cell-flaky` = 70% で throw する一時失敗）で注入した。`tests/resiliency/workflow-compensation/` の自動 integration test は未作成で、本結果は手動 game day の記録である（docs/decision/template-defaults.md#計測で確定する項目 M-29）。
+
+| ケース                       | 結果                 | 所要時間 | 経路                                                                                                                                                          | 最終状態（provisioning table）        |
+| ---------------------------- | -------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| (a) `cell-01`（正常）        | `SUCCEEDED`          | 3.9 秒   | Init → ValidateRequest → ReserveTenantSlot → ProvisionResources → ActivateTenant → PublishProvisioned → Provisioned                                           | slot `TENANT#newco-ok` が `ACTIVE`    |
+| (b) `cell-full`（恒久失敗）  | `FAILED`（補償済み） | 3.5 秒   | … → ProvisionResources（失敗）→ Catch → ReleaseTenantSlot → PublishFailed → ProvisioningFailed                                                                | slot は削除済み（table に存在しない） |
+| (c) `cell-flaky`（一時失敗） | `SUCCEEDED`          | 24.4 秒  | ProvisionResources で `LambdaFunctionFailed` 4 回 → `TRANSIENT_RETRY`（interval 2 秒、backoff 2、full jitter、maxAttempts 4、maxDelay 30 秒）で再試行後に成功 | slot `ACTIVE`                         |
+
+読み方:
+
+- 補償は Decision の「Catch で補償を逆順に実行する」とおり ReleaseTenantSlot まで戻り、`tenant.provisioning-failed.v1` を発行して `Fail` で終わった。slot が残らないことを table で確認した（runbook `docs/runbooks/workflow-service.md` 4.2 の手動介入は不要だった）。
+- 一時失敗は state machine の retry だけで吸収され、Lambda 側の retry や consumer 側の再配信と多重にならなかった（ADR-0014 の「retry owner を 1 層に限定」）。4 回 retry の総時間 24.4 秒は interval 2 秒 × backoff 2（2 + 4 + 8 + 16 = 30 秒上限）に full jitter が入った値で、TD-14 の想定内。
+- Evidence 1 行目の integration test（503 注入、最終状態 `ROLLED_BACK`）は未実装。本テンプレートの実装では失敗時の最終状態は「slot 削除 + `ProvisioningFailed`」で、`ROLLED_BACK` という状態値は持たないため、test 作成時に受入基準の表現を合わせる。
+- runbook は retry を「最大 3 回」と記載しているが、コード（`TRANSIENT_RETRY`）は maxAttempts 4 で、実測も 4 回 retry した。runbook 側を修正する。
+
 ## Compliance / How it is enforced
 
 - `PavedWorkflow` が Standard を既定とし、`workflowType: 'express'` には `idempotent: true` の宣言を要求する。

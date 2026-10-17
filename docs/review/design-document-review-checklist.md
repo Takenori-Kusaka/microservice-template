@@ -169,6 +169,19 @@
 | 13-3 | stateful resource 保護 | termination protection、`RemovalPolicy.RETAIN` / snapshot、PITR を production で有効。logical ID を変えない                                                                                                   | Blocker | §17、受入基準    | E-36       |
 | 13-4 | 例外 ADR               | 指針からの逸脱ごとに ADR があり、Context / Decision / Alternatives（2案以上）/ Consequences / Evidence / Expiry / Owner が揃う                                                                                | Major   | §20              | E-89       |
 
+## 14. 破壊と再生・侵入耐性
+
+| #    | 確認観点                   | 合格基準                                                                                                                                                                                                                                                                   | 重大度  | 指針参照             | 根拠                       |
+| ---- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | -------------------- | -------------------------- |
+| 14-1 | chaos 実験の定義           | 依存先遅延 / 関数障害 / poison / 配信停止 / consumer 停止 / PITR 復元の各実験に steady state、仮説、blast radius、stop condition（CloudWatch alarm）、再生手順、記録先が書かれている。FIS で注入できない SQS / EventBridge / DynamoDB テーブル障害は hook か設定変更で代替 | Major   | §21.2、ADR-0025      | E-104、E-107、E-109、E-110 |
+| 14-2 | 再生手段の具体化           | rollback（CodeDeploy alarm）、DLQ redrive、EventBridge archive replay（`replay-name` で重複排除、同時 10）、PITR（新テーブルへ復元、設定再適用）の手順と RTO / RPO（Resilience Hub policy）が設計書にある                                                                  | Major   | §21.2、§12、ADR-0020 | E-114、E-115、E-116、E-113 |
+| 14-3 | 影響範囲の限定             | 1 テナント / 1 関数 / 1 role の侵害が他へ波及しない根拠が MITRE ATT&CK の tactic ごとに示され、tenant 単位の遮断手段（deny list、WAF 集約 key、tenant 別 KMS key）と短命資格情報（`aws login` / Identity Center）が設計されている                                          | Blocker | §21.3、§13、ADR-0004 | E-167、E-123、E-128、E-125 |
+| 14-4 | 検出の設計                 | GuardDuty（Lambda Protection / Extended Threat Detection）、Security Hub、Config、Inspector、Access Analyzer の有効化と delegated admin、CloudTrail data events（書き込み系）の対象、`TenantIsolationViolationAttempt` の発行箇所と alarm、TTD / TTC の目標                | Major   | §21.4、TD-30         | E-138、E-141、E-145、E-146 |
+| 14-5 | 自動封じ込めと abort       | 検出 → EventBridge → 封じ込め Lambda の条件（severity、影響範囲の特定）、実行上限、解除手段、封じ込め専用 role の権限列挙が書かれている                                                                                                                                    | Major   | §21.7、TD-32         | E-144、E-141               |
+| 14-6 | トレーサビリティと証拠保全 | `correlationId` / `tenantId` / `subjectId` と CloudTrail `userIdentity`（`sessionIssuer` / `sourceIdentity` / `inScopeOf`）の突合手順、組織 trail の log file validation、Log Archive account の Object Lock、保持期間（TD-31）、chain-of-custody の 4 要件                | Major   | §21.5、§14、TD-31    | E-151、E-150、E-160、E-166 |
+| 14-7 | AI / agent 面の対策        | テナントコード・agent のツール実行が MicroVM で、Network Connector により egress が VPC に固定（既定は public）され、agent role の権限列挙、Bedrock Guardrails + GuardDuty AI Protection、code signing `Enforce` が設計されている                                          | Major   | §21.7、ADR-0007      | E-121、E-143、E-122、E-168 |
+| 14-8 | runbook の接続             | `docs/runbooks/security-incident.md` 相当が、検知 → 分析 → 封じ込め → 根絶 → 復旧 → 事後の節と具体的な CLI / クエリを持ち、`service.yaml` の `runbook` から辿れる                                                                                                          | Major   | §21.6、§19           | E-163、E-165               |
+
 ## レビュー終了条件
 
 - Blocker 0 件。Major はすべて期限または例外 ADR 番号が付いている。

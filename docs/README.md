@@ -8,17 +8,18 @@ B2BマルチテナントPaaS向け サーバレス・マイクロサービス �
 | -------------------------- | ----------------------------------------------------------------------------------------------------------- |
 | 新規サービスを作る         | [指針書](microservice-guidelines.md) の 1, 3, 4, 16, 20章 → `pnpm create-service --type api                 | worker | workflow` |
 | プラットフォームを運用する | [指針書](microservice-guidelines.md) の 2, 3, 11, 17, 18章 → [アーキテクチャ概要](architecture/overview.md) |
-| オンコールに入る           | [runbooks/](runbooks/) → 指針書 19, 12, 11章                                                                |
-| セキュリティ / 監査        | [threat-models/](threat-models/) → 指針書 5, 12, 13, 14章                                                   |
+| オンコールに入る           | [runbooks/](runbooks/) → 指針書 19, 12, 11, 21章                                                            |
+| セキュリティ / 監査        | [threat-models/](threat-models/) → 指針書 5, 12, 13, 14, 21章                                               |
 | アーキテクチャレビュー     | 指針書の「主要な初期判断」「優先ADR一覧」 → [adr/](adr/)                                                    |
 
 ## 文書一覧
 
 ### 指針
 
-| 文書                                                     | 内容                                                                                                                                                                                                                                                                |
-| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [microservice-guidelines.md](microservice-guidelines.md) | 設計指針書本体。位置づけ、採用する実運用知見、全20章（目的 / 標準 / 必須ルール / 判断基準 / 禁止事項 / 検証方法 / 関連ADR）、主要な初期判断、優先ADR一覧、テンプレートリポジトリ構成、golden path、モック環境の最小スコープ、受入基準、実装ロードマップ、References |
+| 文書                                                                                             | 内容                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [microservice-guidelines.md](microservice-guidelines.md)                                         | 設計指針書本体。位置づけ、採用する実運用知見、全20章（目的 / 標準 / 必須ルール / 判断基準 / 禁止事項 / 検証方法 / 関連ADR）、主要な初期判断、優先ADR一覧、テンプレートリポジトリ構成、golden path、モック環境の最小スコープ、受入基準、実装ロードマップ、References                                                                                                                                                                                                                                                                                                                   |
+| [microservice-guidelines-resilience-security.md](microservice-guidelines-resilience-security.md) | 第21章 破壊と再生・侵入耐性。chaos engineering（FIS の serverless 対応、simulation hook、game day シナリオ、再生手段）、影響範囲の限定（MITRE ATT&CK 対応、SCP / RCP、短命資格情報、MicroVM egress、tenant 単位の遮断）、侵入検出（GuardDuty / Security Hub / Detective / Config / Inspector / Access Analyzer とアプリ層検出、TTD / TTC SLO）、侵入トレーサビリティ（`correlationId` × CloudTrail `userIdentity`、log file validation、Log Archive account、chain-of-custody）、AI 時代の追加策（prompt injection、自動封じ込め、attack-surface スキャン）、ADR-0025 / 0026 起票候補 |
 
 ### アーキテクチャ
 
@@ -37,13 +38,14 @@ B2BマルチテナントPaaS向け サーバレス・マイクロサービス �
 
 ### Runbook
 
-| 文書                                                                                   | 対象                                                                                                             |
-| -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| [runbooks/dlq-redrive.md](runbooks/dlq-redrive.md)                                     | 全SQS DLQの診断、原因分類、redrive（`start-message-move-task`）、poison message退避、業務補正                    |
-| [runbooks/order-service.md](runbooks/order-service.md)                                 | `example-order-service`：availability / latency / throttle / DynamoDB / outbox relay / 冪等テーブル / authorizer |
-| [runbooks/worker-service.md](runbooks/worker-service.md)                               | `example-worker-service`：tier別queue age、エラー分類、`maxConcurrency`、rule DLQ、外部API障害、二重履行         |
-| [runbooks/workflow-service.md](runbooks/workflow-service.md)                           | `example-workflow-service`：失敗実行の特定、補償失敗時の手動介入、再要求、timeout、二重プロビジョニング          |
-| [runbooks/lambda-concurrency-throttling.md](runbooks/lambda-concurrency-throttling.md) | account quota / unreserved / reserved / SQS maxConcurrency / scaling rate の切り分けと一時対応、quota申請        |
+| 文書                                                                                   | 対象                                                                                                                                                                                                                                    |
+| -------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [runbooks/dlq-redrive.md](runbooks/dlq-redrive.md)                                     | 全SQS DLQの診断、原因分類、redrive（`start-message-move-task`）、poison message退避、業務補正                                                                                                                                           |
+| [runbooks/order-service.md](runbooks/order-service.md)                                 | `example-order-service`：availability / latency / throttle / DynamoDB / outbox relay / 冪等テーブル / authorizer                                                                                                                        |
+| [runbooks/worker-service.md](runbooks/worker-service.md)                               | `example-worker-service`：tier別queue age、エラー分類、`maxConcurrency`、rule DLQ、外部API障害、二重履行                                                                                                                                |
+| [runbooks/workflow-service.md](runbooks/workflow-service.md)                           | `example-workflow-service`：失敗実行の特定、補償失敗時の手動介入、再要求、timeout、二重プロビジョニング                                                                                                                                 |
+| [runbooks/lambda-concurrency-throttling.md](runbooks/lambda-concurrency-throttling.md) | account quota / unreserved / reserved / SQS maxConcurrency / scaling rate の切り分けと一時対応、quota申請                                                                                                                               |
+| [runbooks/security-incident.md](runbooks/security-incident.md)                         | セキュリティインシデント：準備 → 検知 → 分析（Logs Insights / Athena / Detective、証跡保全）→ 封じ込め（tenant / 関数 / 資格情報単位）→ 根絶 → 復旧 → post-incident。AWS Security Incident Response Guide と NIST SP 800-61 Rev. 3 準拠 |
 
 各runbookは共通構成：症状 → ダッシュボード / alarm → 診断手順（AWS CLI / Logs Insights）→ 復旧手順 → エスカレーション → post-incident。
 

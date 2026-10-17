@@ -129,7 +129,7 @@ slo:
 
 - 合格条件「定常で SLO 達成、overload で 429 が返り始めた後も成功リクエストの p99 が SLO の 1.5 倍以内」は、steady 30 RPS / overload 150 RPS の範囲で満たした（成功 p99 91.5 ms ≪ 750 ms）。Builders' Library の goodput 維持[^38]を実機で確認した。
 - API Gateway 側の p99 982 ms は throttle された 429 / 503 を含む全リクエストの値で、client 側の成功リクエスト p99（91.5 ms）とは母集団が異なる。
-- TD-18 の段別配賦（authorizer ≤ 50 ms、Lambda ≤ 80 ms、DynamoDB ≤ 40 ms）に対し、CreateOrder の Duration p50 44 ms / p99 189 ms は Lambda + Idempotency + DynamoDB の合算で p99 が配賦（80 + 40 = 120 ms）を超えている。cold start 混在（p99）のため、Provisioned Concurrency の要否は M-10 / M-11 で `Init Duration` を分離してから判断する。
+- TD-18 の段別配賦（authorizer ≤ 50 ms、Lambda init ≤ 100 ms、Lambda ≤ 80 ms、DynamoDB ≤ 40 ms）に対し、Logs Insights で `Init Duration` を分離すると（ADR-0008 実測、M-10）: warm `@duration` p50 38.7 / p99 79.1 ms で business logic + Idempotency + DynamoDB の配賦 120 ms 内。cold start は 9 / 18,019 件（0.05%、配賦の「cold 比率 2% 以下」を満たす）で `Init Duration` p50 363 ms / p99 488 ms と配賦 100 ms を超えるが、頻度が低く client p99（91.5 ms）には現れない。この負荷では Provisioned Concurrency は不要（M-11）。CloudWatch `Duration` p99 189 ms は Init を含む REPORT 由来の差。
 - quota 10 では burst 200 RPS / overload 1,000 RPS のシナリオは全件 throttle になり意味を持たないため未実施。quota 増枠後（ADR-0017）に再計測する。
 
 ## Compliance / How it is enforced
