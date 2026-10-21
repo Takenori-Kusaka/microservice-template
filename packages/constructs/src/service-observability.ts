@@ -170,6 +170,32 @@ export class ServiceObservability extends Construct {
       );
     }
 
+    // Detection signal (ch.21 §21.4): any tenant-isolation violation attempt pages on-call.
+    // Emitted by @paas/observability recordIsolationViolation() as a single metric with the
+    // default dimensions (service, cellId), so the dimension set here is deterministic.
+    const isolationAlarm = new cloudwatch.Alarm(this, 'TenantIsolationViolationAlarm', {
+      alarmDescription: `${manifest.serviceId}: tenant isolation violation attempt detected (runbook docs/runbooks/security-incident.md)`,
+      metric: new cloudwatch.Metric({
+        namespace: 'PaaS',
+        metricName: 'TenantIsolationViolationAttempt',
+        dimensionsMap: { service: manifest.serviceId, cellId: config.cellId },
+        period: Duration.minutes(1),
+        statistic: 'sum',
+      }),
+      threshold: 1,
+      evaluationPeriods: 1,
+      comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+      treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
+    });
+    if (props.alarmTopic) isolationAlarm.addAlarmAction(new actions.SnsAction(props.alarmTopic));
+    this.dashboard.addWidgets(
+      new cloudwatch.SingleValueWidget({
+        title: 'Tenant isolation violation attempts (detection, §21.4)',
+        metrics: [isolationAlarm.metric],
+        width: 24,
+      }),
+    );
+
     // Composite alarm: customer-impact SLIs only (API faults/latency, queue age, workflow failures).
     const impactAlarms: cloudwatch.IAlarm[] = [
       ...(props.apis ?? []).flatMap((a) => a.alarms),

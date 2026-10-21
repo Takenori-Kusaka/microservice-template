@@ -8,7 +8,7 @@ B2B マルチテナント PaaS 向け、**フルマネージド・サーバレ�
 2. **決める** — [docs/decision](docs/decision/) の質問票・決定木で、要件からアーキテクチャ（API compute、テナント分離、同期/非同期、ランタイム、データストア）を選ぶ。
 3. **レビューする** — [docs/review](docs/review/) のチェックリストで、既存リポジトリ・要求仕様書・設計指針書・設計書をレビューし、マイクロサービス開発の課題を洗い出す。
 
-すべての規範的な記述は出典（AWS Well-Architected / SaaS Lens / Builders' Library、各社の公開事例、CloudEvents・OpenAPI 等の規格）に紐づけている。出典のない主張は「要検証」と明記する方針（[docs/microservice-guidelines.md](docs/microservice-guidelines.md) のエビデンス台帳）。
+すべての規範的な記述は出典（AWS Well-Architected / SaaS Lens / Builders' Library、各社の公開事例、CloudEvents・OpenAPI 等の規格）に紐づけている。出典のない主張は「既定値（例示値）: … 調整: TD-NN」「計測で確定: …（M-NN）」「公式ドキュメントに記載なし（確認日、URL）」のいずれかで明記する（[docs/microservice-guidelines.md](docs/microservice-guidelines.md) のエビデンス台帳、[docs/review/evidence-register.md](docs/review/evidence-register.md)）。
 
 ## 構成
 
@@ -64,6 +64,17 @@ pnpm --filter @paas/example-order-service dev:web        # ローカル: AWS_LAM
 pnpm --filter @paas/example-order-service build:web      # esbuild → dist/web/index.mjs (Node.js 24 / arm64 前提)
 pnpm synth --context env=sandbox --context experimentalWeb=true
 ```
+
+### ADR-0026 検出基盤（opt-in）
+
+`PlatformDetection` construct（`packages/constructs/src/platform-detection.ts`）は、ログファイル検証付き CloudTrail（management + DynamoDB / Lambda の data events、Object Lock 対応の専用 bucket）、GuardDuty（Lambda Protection）、Security Hub、GuardDuty High/Critical finding → alarm topic のルーティングを 1 構成で提供します。GuardDuty / Security Hub はアカウント単位のシングルトンで、CloudTrail data events はイベント課金のため、**既定では作成しません**（共有本番アカウントでの誤有効化を防ぐ）。
+
+```bash
+pnpm synth --context env=sandbox --context detection=true                       # CloudTrail + finding routing のみ
+pnpm synth --context env=sandbox --context detection=true --context guardDuty=true --context securityHub=true
+```
+
+テナント越境の試み（`TenantIsolationViolationAttempt`、API / Web / consumer の拒否点で発行）は `ServiceObservability` のアラームで常時監視し、`docs/runbooks/security-incident.md` へ接続します。
 
 `cdk synth` は新しいリソース型を知らないローカル validator の警告（`F3006 Unknown resource type 'AWS::Lambda::WebFunction'`）を出すが、CloudFormation 側の型は公開済みである（[docs/decision/api-compute-selection.md](docs/decision/api-compute-selection.md) §5.4）。比較の観点・合格条件・費用試算は同ドキュメントと ADR-0006 を参照。
 

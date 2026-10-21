@@ -4,10 +4,12 @@ import * as kms from 'aws-cdk-lib/aws-kms';
 import * as sns from 'aws-cdk-lib/aws-sns';
 import * as subscriptions from 'aws-cdk-lib/aws-sns-subscriptions';
 import type { Construct } from 'constructs';
-import { show, type EnvironmentConfig } from '@paas/constructs';
+import { PlatformDetection, show, type EnvironmentConfig } from '@paas/constructs';
 
 export interface PlatformStackProps extends StackProps {
   readonly config: EnvironmentConfig;
+  /** Opt-in detection baseline (CloudTrail data events, GuardDuty, Security Hub) — ADR-0026. */
+  readonly detection?: { enabled: boolean; guardDuty?: boolean; securityHub?: boolean };
 }
 
 /** Deterministic names let service stacks discover platform resources without CFN exports (§17). */
@@ -68,6 +70,14 @@ export class PlatformStack extends Stack {
     show(this.eventBus, 'cell event bus');
     show(this.alarmTopic, 'alarm topic');
     new CfnOutput(this, 'EventBusName', { value: this.eventBus.eventBusName });
+    if (props.detection?.enabled) {
+      new PlatformDetection(this, 'Detection', {
+        config: props.config,
+        alarmTopic: this.alarmTopic,
+        enableGuardDuty: props.detection.guardDuty ?? false,
+        enableSecurityHub: props.detection.securityHub ?? false,
+      });
+    }
     new CfnOutput(this, 'AlarmTopicArn', { value: this.alarmTopic.topicArn });
   }
 }

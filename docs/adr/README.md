@@ -16,33 +16,34 @@
 
 ## 一覧
 
-| 番号                                                                                   | タイトル                                                                                    | Status   | Review date |
-| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | -------- | ----------- |
-| [ADR-0001](ADR-0001-microservice-boundary-definition.md)                               | Microservice boundary definition                                                            | accepted | 2027-04-17  |
-| [ADR-0002](ADR-0002-repository-strategy.md)                                            | Repository strategy                                                                         | accepted | 2027-04-17  |
-| [ADR-0003](ADR-0003-multi-account-topology.md)                                         | Multi-account topology                                                                      | accepted | 2027-04-17  |
-| [ADR-0004](ADR-0004-tenant-isolation-models.md)                                        | Tenant isolation models                                                                     | accepted | 2027-04-17  |
-| [ADR-0005](ADR-0005-api-gateway-http-vs-rest-api.md)                                   | API Gateway HTTP API vs REST API                                                            | proposed | 2027-04-17  |
-| [ADR-0006](ADR-0006-lambda-event-functions-vs-web-functions.md)                        | Lambda Event Functions vs Web Functions                                                     | proposed | 2027-04-17  |
-| [ADR-0007](ADR-0007-lambda-microvm-usage-policy.md)                                    | Lambda MicroVM usage policy                                                                 | proposed | 2027-04-17  |
-| [ADR-0008](ADR-0008-zip-vs-lambda-container-image.md)                                  | zip vs Lambda container image                                                               | proposed | 2027-04-17  |
-| [ADR-0009](ADR-0009-lambda-vs-ecs-fargate.md)                                          | Lambda vs ECS/Fargate                                                                       | proposed | 2027-04-17  |
-| [ADR-0010](ADR-0010-step-functions-policy.md)                                          | Step Functions policy                                                                       | accepted | 2027-04-17  |
-| [ADR-0011](ADR-0011-service-communication.md)                                          | Service communication                                                                       | accepted | 2027-04-17  |
-| [ADR-0012](ADR-0012-data-ownership.md)                                                 | Data ownership                                                                              | accepted | 2027-04-17  |
-| [ADR-0013](ADR-0013-event-envelope-and-versioning.md)                                  | Event envelope and versioning                                                               | accepted | 2027-04-17  |
-| [ADR-0014](ADR-0014-idempotency-and-retry.md)                                          | Idempotency and retry                                                                       | accepted | 2027-04-17  |
-| [ADR-0015](ADR-0015-trace-and-correlation.md)                                          | Trace and correlation                                                                       | accepted | 2027-04-17  |
-| [ADR-0016](ADR-0016-slo-and-performance-budgets.md)                                    | SLO and performance budgets                                                                 | accepted | 2027-04-17  |
-| [ADR-0017](ADR-0017-lambda-concurrency-governance.md)                                  | Lambda concurrency governance                                                               | accepted | 2027-04-17  |
-| [ADR-0018](ADR-0018-cost-attribution.md)                                               | Cost attribution                                                                            | proposed | 2027-04-17  |
-| [ADR-0019](ADR-0019-cdk-construct-boundaries.md)                                       | CDK construct boundaries                                                                    | accepted | 2027-04-17  |
-| [ADR-0020](ADR-0020-deployment-strategy.md)                                            | Deployment strategy                                                                         | accepted | 2027-04-17  |
-| ADR-0021（起票候補、[再検討 §A](../decision/latest-tech-reassessment.md)）             | Runtime: Node.js 24 standard, Bun not adopted                                               | proposed | 2027-04-17  |
-| ADR-0022（起票候補、[再検討 §C](../decision/latest-tech-reassessment.md)）             | Observability pipeline (OTel migration, central aggregation)                                | proposed | 2027-04-17  |
-| ADR-0023（起票候補、[再検討 §D](../decision/latest-tech-reassessment.md)）             | Local virtual environment (compose L1 / LocalStack L2)                                      | proposed | 2027-04-17  |
-| ADR-0025（起票候補、[第21章 21.8](../microservice-guidelines-resilience-security.md)） | Chaos & resilience testing (FIS, game days, Resilience Hub)                                 | proposed | 2027-04-17  |
-| ADR-0026（起票候補、[第21章 21.8](../microservice-guidelines-resilience-security.md)） | Detection & response (GuardDuty / Security Hub / CloudTrail, auto-containment, log archive) | proposed | 2027-04-17  |
+| 番号                                                            | タイトル                                                                                      | Status   | Review date |
+| --------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | -------- | ----------- |
+| [ADR-0001](ADR-0001-microservice-boundary-definition.md)        | Microservice boundary definition                                                              | accepted | 2027-04-17  |
+| [ADR-0002](ADR-0002-repository-strategy.md)                     | Repository strategy                                                                           | accepted | 2027-04-17  |
+| [ADR-0003](ADR-0003-multi-account-topology.md)                  | Multi-account topology                                                                        | accepted | 2027-04-17  |
+| [ADR-0004](ADR-0004-tenant-isolation-models.md)                 | Tenant isolation models                                                                       | accepted | 2027-04-17  |
+| [ADR-0005](ADR-0005-api-gateway-http-vs-rest-api.md)            | API Gateway HTTP API vs REST API                                                              | proposed | 2027-04-17  |
+| [ADR-0006](ADR-0006-lambda-event-functions-vs-web-functions.md) | Lambda Event Functions vs Web Functions                                                       | proposed | 2027-04-17  |
+| [ADR-0007](ADR-0007-lambda-microvm-usage-policy.md)             | Lambda MicroVM usage policy                                                                   | proposed | 2027-04-17  |
+| [ADR-0008](ADR-0008-zip-vs-lambda-container-image.md)           | zip vs Lambda container image                                                                 | proposed | 2027-04-17  |
+| [ADR-0009](ADR-0009-lambda-vs-ecs-fargate.md)                   | Lambda vs ECS/Fargate                                                                         | proposed | 2027-04-17  |
+| [ADR-0010](ADR-0010-step-functions-policy.md)                   | Step Functions policy                                                                         | accepted | 2027-04-17  |
+| [ADR-0011](ADR-0011-service-communication.md)                   | Service communication                                                                         | accepted | 2027-04-17  |
+| [ADR-0012](ADR-0012-data-ownership.md)                          | Data ownership                                                                                | accepted | 2027-04-17  |
+| [ADR-0013](ADR-0013-event-envelope-and-versioning.md)           | Event envelope and versioning                                                                 | accepted | 2027-04-17  |
+| [ADR-0014](ADR-0014-idempotency-and-retry.md)                   | Idempotency and retry                                                                         | accepted | 2027-04-17  |
+| [ADR-0015](ADR-0015-trace-and-correlation.md)                   | Trace and correlation                                                                         | accepted | 2027-04-17  |
+| [ADR-0016](ADR-0016-slo-and-performance-budgets.md)             | SLO and performance budgets                                                                   | accepted | 2027-04-17  |
+| [ADR-0017](ADR-0017-lambda-concurrency-governance.md)           | Lambda concurrency governance                                                                 | accepted | 2027-04-17  |
+| [ADR-0018](ADR-0018-cost-attribution.md)                        | Cost attribution                                                                              | proposed | 2027-04-17  |
+| [ADR-0019](ADR-0019-cdk-construct-boundaries.md)                | CDK construct boundaries                                                                      | accepted | 2027-04-17  |
+| [ADR-0020](ADR-0020-deployment-strategy.md)                     | Deployment strategy                                                                           | accepted | 2027-04-17  |
+| [ADR-0021](ADR-0021-runtime-nodejs24-vs-bun.md)                 | Runtime: Node.js 24 standard, Bun not adopted                                                 | accepted | 2027-04-21  |
+| [ADR-0022](ADR-0022-observability-pipeline.md)                  | Observability pipeline (OTel migration, central aggregation)                                  | accepted | 2027-04-21  |
+| [ADR-0023](ADR-0023-local-virtual-environment.md)               | Local virtual environment (compose L1 / LocalStack L2)                                        | accepted | 2027-04-21  |
+| [ADR-0024](ADR-0024-diagram-as-code-toolchain.md)               | Diagram-as-code toolchain (cloud assembly → D2 as source of truth)                            | accepted | 2027-04-21  |
+| [ADR-0025](ADR-0025-chaos-and-resilience-testing.md)            | Chaos and resilience testing (FIS, game days, Resilience Hub)                                 | accepted | 2027-04-21  |
+| [ADR-0026](ADR-0026-detection-and-response.md)                  | Detection and response (GuardDuty / Security Hub / CloudTrail, auto-containment, log archive) | proposed | 2027-04-21  |
 
 ## Status の意味
 
@@ -55,22 +56,26 @@
 
 ## ガイドライン章との対応
 
-| ADR              | 主な章                                               |
-| ---------------- | ---------------------------------------------------- |
-| 0001, 0002       | 3. 用語と責任境界、4. サービス分割                   |
-| 0003, 0004       | 5. マルチテナンシー、11. Lambda 同時実行数とクォータ |
-| 0005, 0006, 0007 | 6. API 設計                                          |
-| 0008, 0009, 0010 | 8. 処理・ワークフロー                                |
-| 0011, 0013       | 7. イベント設計                                      |
-| 0012             | 9. データ設計                                        |
-| 0014             | 6. API 設計、12. 信頼性                              |
-| 0015             | 14. リクエストトレーサビリティ                       |
-| 0016             | 10. 性能・容量                                       |
-| 0017             | 11. Lambda 同時実行数とクォータ                      |
-| 0018             | 15. コスト                                           |
-| 0019             | 17. CDK/IaC                                          |
-| 0020             | 18. CI/CD                                            |
-| 0025, 0026       | 21. 破壊と再生・侵入耐性（別ファイル）               |
+| ADR              | 主な章                                                |
+| ---------------- | ----------------------------------------------------- |
+| 0001, 0002       | 3. 用語と責任境界、4. サービス分割                    |
+| 0003, 0004       | 5. マルチテナンシー、11. Lambda 同時実行数とクォータ  |
+| 0005, 0006, 0007 | 6. API 設計                                           |
+| 0008, 0009, 0010 | 8. 処理・ワークフロー                                 |
+| 0011, 0013       | 7. イベント設計                                       |
+| 0012             | 9. データ設計                                         |
+| 0014             | 6. API 設計、12. 信頼性                               |
+| 0015             | 14. リクエストトレーサビリティ                        |
+| 0016             | 10. 性能・容量                                        |
+| 0017             | 11. Lambda 同時実行数とクォータ                       |
+| 0018             | 15. コスト                                            |
+| 0019             | 17. CDK/IaC                                           |
+| 0020             | 18. CI/CD                                             |
+| 0021             | 16. 開発プロセス、8. 処理・ワークフロー（ランタイム） |
+| 0022             | 14. リクエストトレーサビリティ、19. 運用              |
+| 0023             | 16. 開発プロセス（ローカル環境と最終保証）            |
+| 0024             | 17. CDK/IaC（構成図の生成）                           |
+| 0025, 0026       | 21. 破壊と再生・侵入耐性（別ファイル）                |
 
 ## 2026-10-17 の検証で判明した要注意事項
 
@@ -84,3 +89,11 @@ ADR 作成時に現行 AWS ドキュメントで確認し、ガイドライン�
 - Lambda SQS event source の推奨 `maxReceiveCount` は 5 以上、visibility timeout は関数 timeout の 6 倍 + batch window（ADR-0011 / 0014）。
 - EventBridge Schema Registry は OpenAPI 3 と JSONSchema Draft4 のみ対応（ADR-0013）。
 - DynamoDB `dynamodb:LeadingKeys` 条件は `Scan` を制限できないため、pool テーブルでは `Scan` を許可しない（ADR-0004 / 0012）。
+
+## 2026-10-21 の検証で判明した要注意事項
+
+- Lambda Web Functions のランタイムは `nodejs24.x` のみで runtime management control なし。Node.js 24 を Event / Web 共通の標準にする（ADR-0021）。
+- X-Ray SDK / Daemon は 2026-02-25 に maintenance mode、2027-02-25 にサポート終了。trace 経路を OTel へ切り替える（ADR-0022）。
+- CloudTrail Lake は 2026-05-31 以降、新規顧客に開放されない。監査証跡の正本は CloudTrail trail → S3 → Athena（ADR-0022 / 0026）。
+- FIS の Lambda action は Event Functions のみ。SQS / EventBridge / DynamoDB テーブル / Web Functions への fault 注入 action はない（ADR-0025）。
+- GuardDuty detector と Security Hub は account / region singleton。template は `--context detection=true` の opt-in でのみ作る（ADR-0026）。

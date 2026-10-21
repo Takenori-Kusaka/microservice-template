@@ -22,6 +22,12 @@ new EnvironmentStage(app, `paas-${envName}`, {
   config,
   projectRoot,
   experimentalWeb: String(app.node.tryGetContext('experimentalWeb') ?? 'false') === 'true',
+  // --context detection=true [--context guardDuty=true --context securityHub=true]
+  detection: {
+    enabled: String(app.node.tryGetContext('detection') ?? 'false') === 'true',
+    guardDuty: String(app.node.tryGetContext('guardDuty') ?? 'false') === 'true',
+    securityHub: String(app.node.tryGetContext('securityHub') ?? 'false') === 'true',
+  },
 });
 
 app.synth();

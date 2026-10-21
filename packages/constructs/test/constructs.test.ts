@@ -236,3 +236,47 @@ describe('PavedWorkflow', () => {
     t.resourceCountIs('AWS::CloudWatch::Alarm', 3);
   });
 });
+
+describe('PlatformDetection', () => {
+  it('creates a validated CloudTrail with DynamoDB and Lambda data events, Object-Lock bucket and GuardDuty routing', async () => {
+    const { PlatformDetection } = await import('../src/platform-detection.js');
+    const sns = await import('aws-cdk-lib/aws-sns');
+    const { stack, config } = testStack();
+    const topic = new sns.Topic(stack, 'Alarms');
+    new PlatformDetection(stack, 'Detection', {
+      config,
+      alarmTopic: topic,
+      enableGuardDuty: true,
+      enableSecurityHub: true,
+    });
+    const t = Template.fromStack(stack);
+    t.hasResourceProperties('AWS::CloudTrail::Trail', {
+      EnableLogFileValidation: true,
+      EventSelectors: Match.arrayWith([
+        Match.objectLike({
+          DataResources: Match.arrayWith([Match.objectLike({ Type: 'AWS::DynamoDB::Table' })]),
+        }),
+        Match.objectLike({
+          DataResources: Match.arrayWith([Match.objectLike({ Type: 'AWS::Lambda::Function' })]),
+        }),
+      ]),
+    });
+    t.hasResourceProperties('AWS::S3::Bucket', {
+      ObjectLockEnabled: true,
+      VersioningConfiguration: { Status: 'Enabled' },
+    });
+    t.hasResourceProperties('AWS::GuardDuty::Detector', {
+      Enable: true,
+      Features: Match.arrayWith([
+        Match.objectLike({ Name: 'LAMBDA_NETWORK_LOGS', Status: 'ENABLED' }),
+      ]),
+    });
+    t.resourceCountIs('AWS::SecurityHub::Hub', 1);
+    t.hasResourceProperties('AWS::Events::Rule', {
+      EventPattern: Match.objectLike({
+        source: ['aws.guardduty'],
+        detail: { severity: [{ numeric: ['>=', 7] }] },
+      }),
+    });
+  });
+});

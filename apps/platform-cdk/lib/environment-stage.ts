@@ -15,6 +15,8 @@ export interface EnvironmentStageProps extends StageProps {
    * in production; requires `pnpm --filter @paas/example-order-service build:web` first.
    */
   readonly experimentalWeb?: boolean;
+  /** ADR-0026 detection baseline; opt-in because GuardDuty/Security Hub are account singletons. */
+  readonly detection?: { enabled: boolean; guardDuty?: boolean; securityHub?: boolean };
 }
 
 /**
@@ -43,7 +45,10 @@ export class EnvironmentStage extends Stage {
     const prefix = `paas-${config.name}-${config.cellId}`;
     const names = platformNames(config);
 
-    this.platform = new PlatformStack(this, `${prefix}-platform`, { config });
+    this.platform = new PlatformStack(this, `${prefix}-platform`, {
+      config,
+      ...(props.detection ? { detection: props.detection } : {}),
+    });
     const order = new OrderServiceStack(this, `${prefix}-order-service`, {
       config,
       projectRoot,

@@ -11,4 +11,5 @@ export * from './paved-workflow.js';
 export * from './service-observability.js';
 export * from './guardrails.js';
 export * from './service-stack.js';
+export * from './platform-detection.js';
 export * from './experimental/web-function.js';

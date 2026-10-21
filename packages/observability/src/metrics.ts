@@ -74,8 +74,11 @@ export function recordIsolationViolation(
   metrics: Metrics,
   reason: 'missing-tenant' | 'invalid-tenant' | 'foreign-cursor' | 'envelope-tenant' | 'other',
 ): void {
-  metrics.addMetadata('isolationViolationReason', reason);
-  metrics.addMetric(StandardMetrics.TenantIsolationViolationAttempt, MetricUnit.Count, 1);
+  // singleMetric(): emitted immediately with only the default dimensions (service, cellId), so
+  // the detection alarm in ServiceObservability can target a deterministic dimension set.
+  const single = metrics.singleMetric();
+  single.addMetadata('isolationViolationReason', reason);
+  single.addMetric(StandardMetrics.TenantIsolationViolationAttempt, MetricUnit.Count, 1);
 }
 
 /** Classifies an error as an isolation-violation signal, or undefined when it is not one. */
