@@ -63,7 +63,11 @@ interface Claims {
   sub?: string;
 }
 
-/** Sandbox-only: unsigned claims token. Production must verify a real JWT here (要検証: IdP choice). */
+/**
+ * Sandbox-only: unsigned claims token. Production must verify a real JWT here with the
+ * organisation's IdP (ADR-0005: HTTP API native JWT authorizer for Cognito / OIDC; the IdP itself
+ * is an organisational decision, not a template default).
+ */
 function claimsFromAuthorization(header: string | undefined): Claims {
   const env = process.env['PAAS_ENVIRONMENT'];
   if (env !== 'sandbox' && env !== 'development') {
@@ -182,8 +186,9 @@ app.post(
       ]);
     }
     // NOTE: Powertools Idempotency is wired in the Event Functions handler; for the Web Functions
-    // benchmark the same DynamoDB-backed wrapper must be applied around the use case (要検証:
-    // Powertools support for non-handler runtimes, docs/decision/api-compute-selection.md §10.3).
+    // benchmark (M-06) the same DynamoDB-backed wrapper must be applied around the use case.
+    // Powertools documents no Web Functions guidance for Idempotency (ADR-0006, checked 2026-10-17;
+    // docs/decision/api-compute-selection.md §10.3), so M-06 must verify it in the Web runtime.
     const request = CreateOrderRequestSchema.parse(await c.req.json());
     const order = await createOrderUseCase({ repository }, ctx, request);
     const { tenantId: _tenant, ...publicOrder } = order;
