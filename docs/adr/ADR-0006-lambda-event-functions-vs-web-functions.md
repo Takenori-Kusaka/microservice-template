@@ -72,7 +72,12 @@ Event Functions は request $0.20 / 百万 + duration $0.0000166667 / GB 秒（x
 
 ## Evidence
 
-benchmark protocol（`tests/performance/event-vs-web/`）。同一業務ロジック、同一 DynamoDB テーブルで実施する。負荷値と合格閾値は本テンプレートの初期値。計測で確定: 初回 benchmark の結果（cold / warm p99、throttle 率、request 当たり費用、CPU active ratio）を本 ADR に記録し、閾値を見直す（docs/decision/template-defaults.md#計測で確定する項目 M-06、現在は未計測・試験ディレクトリ未作成）。
+benchmark protocol（`tests/performance/event-vs-web.k6.js`、`TARGET=event|web` で同一 workload を両 compute に送る）。同一業務ロジック、同一 DynamoDB テーブル（`OrderWebExperimentalStack` は `OrderServiceStack` の table を参照）で実施する。負荷値と合格閾値は本テンプレートの初期値。計測で確定: 初回 benchmark の結果（cold / warm p99、throttle 率、request 当たり費用、CPU active ratio）を本 ADR に記録し、閾値を見直す（docs/decision/template-defaults.md#計測で確定する項目 M-06、2026-10-21 時点でハーネスは作成済み・未実行）。
+
+ハーネス作成時に一次情報で確認した Web Functions の制約（2026-10-21）:
+
+- `IamAuth` endpoint は SigV4（service 名 `lambda`、endpoint の Region）で署名し、body の有無にかかわらず `X-Amz-Content-SHA256` header が必須。Lambda は署名検証後に `Authorization` header を**削除してから**アプリへ転送するため、アプリ層の bearer token 認証は CloudFront OAC 経由でしか成立しない。[^267] benchmark では sandbox claims を署名対象の `x-paas-sandbox-claims` header で運ぶ（`server.ts`）。
+- Web Functions の request metrics（`ExecutedRequests`、`HTTPResponseStatusClass4XX/5XX`）は home Region に集約され、環境 metrics は `EnvironmentActiveTime` / `EnvironmentCPUTime`（ms、Sum）、`EnvironmentMaxMemoryUsage`、`EnvironmentConcurrentRequests`。throttle は `AWS/Lambda/Web/Usage` 名前空間に Region 別・原因別（account RPS / endpoint rateLimit / account arm64 vCPU / endpoint maxEnvironments）で出るが、`EndpointConcurrentInitThrottle` の 429 はどの throttle metric にも計上されない。metrics に revision dimension はない。[^268] `collect-web-metrics.mjs` はこの表に従って収集し、CPU active ratio = `EnvironmentCPUTime / EnvironmentActiveTime` を算出する。
 
 | 項目                                 | 計測方法                                                              | 合格条件（Web Functions 採用）                              |
 | ------------------------------------ | --------------------------------------------------------------------- | ----------------------------------------------------------- |
@@ -118,6 +123,10 @@ benchmark protocol（`tests/performance/event-vs-web/`）。同一業務ロジ�
 [^74]: [Configuring provisioned concurrency for an Event Function](https://docs.aws.amazon.com/lambda/latest/dg/provisioned-concurrency.html)（参照日 2026-10-17）
 
 [^75]: [Types of metrics for Lambda Event Functions](https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics-types.html)（参照日 2026-10-17）
+
+[^267]: [Lambda Web Function endpoint access control — Signing requests](https://docs.aws.amazon.com/lambda/latest/dg/web-functions-endpoint-access-control.html)（参照日 2026-10-21。「sign them yourself with SigV4 or SigV4a, using the service name `lambda`」「Every signed request must include the `X-Amz-Content-SHA256` header」「After Lambda validates the SigV4 or SigV4a signature, it removes the `Authorization` header before forwarding the request to your function」）
+
+[^268]: [Using CloudWatch metrics with Lambda Web Functions](https://docs.aws.amazon.com/lambda/latest/dg/web-functions-monitoring-metrics.html)（参照日 2026-10-21）
 
 [^106]: [aws-cdk-lib.aws_codedeploy.LambdaDeploymentConfig](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_codedeploy.LambdaDeploymentConfig.html)（参照日 2026-10-17）
 

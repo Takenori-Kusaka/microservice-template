@@ -192,5 +192,8 @@ export class ExperimentalWebFunction extends Construct {
       value: this.endpoint.attrDomainName,
       description: `${manifest.serviceId} experimental Web Function endpoint (${stack.region})`,
     });
+    // Dimension values for AWS/Lambda/Web metrics (tests/performance/collect-web-metrics.mjs).
+    new CfnOutput(this, 'WebFunctionName', { value: functionName });
+    new CfnOutput(this, 'WebEndpointName', { value: this.endpoint.endpointName });
   }
 }

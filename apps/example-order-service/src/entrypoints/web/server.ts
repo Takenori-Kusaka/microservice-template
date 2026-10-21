@@ -64,23 +64,36 @@ interface Claims {
 }
 
 /**
+ * Sandbox-only claims header for `IamAuth` endpoints. Lambda validates the SigV4 signature and
+ * then REMOVES the `Authorization` header before forwarding the request, so an application
+ * behind an `IamAuth` endpoint never sees a bearer token unless CloudFront OAC fronts it
+ * (web-functions-endpoint-access-control.html, "Signing requests", checked 2026-10-21). The M-06
+ * benchmark therefore carries the unsigned sandbox claims in this header; the SigV4 signature
+ * covers it, so only principals allowed `lambda:InvokeWebFunctionEndpoint` can set it.
+ */
+export const SANDBOX_CLAIMS_HEADER = 'x-paas-sandbox-claims';
+
+/**
  * Sandbox-only: unsigned claims token. Production must verify a real JWT here with the
  * organisation's IdP (ADR-0005: HTTP API native JWT authorizer for Cognito / OIDC; the IdP itself
  * is an organisational decision, not a template default).
  */
-function claimsFromAuthorization(header: string | undefined): Claims {
+function claimsFromHeaders(headers: Headers): Claims {
   const env = process.env['PAAS_ENVIRONMENT'];
   if (env !== 'sandbox' && env !== 'development') {
     throw new TenantContextError(
       'JWT verification for Web Functions is not configured outside sandbox (ADR-0006)',
     );
   }
-  if (!header?.startsWith('Bearer ')) throw new TenantContextError('missing bearer token');
+  const authorization = headers.get('authorization') ?? undefined;
+  const sandboxClaims = headers.get(SANDBOX_CLAIMS_HEADER) ?? undefined;
+  let encoded: string;
+  if (authorization?.startsWith('Bearer ')) encoded = authorization.slice(7).trim();
+  else if (sandboxClaims) encoded = sandboxClaims.trim();
+  else throw new TenantContextError('missing bearer token');
   let claims: { tenantId?: unknown; tenantTier?: unknown; sub?: unknown };
   try {
-    claims = JSON.parse(
-      Buffer.from(header.slice(7).trim(), 'base64url').toString('utf8'),
-    ) as typeof claims;
+    claims = JSON.parse(Buffer.from(encoded, 'base64url').toString('utf8')) as typeof claims;
   } catch {
     throw new TenantContextError('malformed token');
   }
@@ -94,7 +107,7 @@ function claimsFromAuthorization(header: string | undefined): Claims {
 }
 
 export function contextFromRequest(headers: Headers, operation: string): ExecutionContext {
-  const claims = claimsFromAuthorization(headers.get('authorization') ?? undefined);
+  const claims = claimsFromHeaders(headers);
   const identity = resolveServiceIdentity({ service: SERVICE_ID, operation });
   const requestId = headers.get('lambda-web-request-id') ?? newId();
   const correlation = acceptOrGenerateToken(headers.get(HEADERS.correlationId));

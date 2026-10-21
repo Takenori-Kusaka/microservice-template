@@ -47,6 +47,30 @@ describe('experimental web server (Hono) — same contract as the Event Function
     expect(input.TransactItems?.[0]?.Put?.Item?.['pk']).toBe('TENANT#acme');
   });
 
+  it('accepts the sandbox claims header used behind IamAuth endpoints (Authorization is stripped by Lambda)', async () => {
+    ddb.on(TransactWriteCommand).resolves({});
+    const res = await app.request('/orders', {
+      method: 'POST',
+      headers: {
+        'x-paas-sandbox-claims': token({ tenantId: 'beta', tenantTier: 'standard' }),
+        'idempotency-key': 'web-create-0002',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        customerRef: 'c',
+        lines: [{ sku: 'A', quantity: 1, unitPrice: { amount: 10, currency: 'JPY' } }],
+      }),
+    });
+    expect(res.status).toBe(201);
+    const input = ddb.commandCalls(TransactWriteCommand).at(-1)!.args[0].input;
+    expect(input.TransactItems?.[0]?.Put?.Item?.['pk']).toBe('TENANT#beta');
+  });
+
+  it('rejects a request with neither Authorization nor the sandbox claims header', async () => {
+    const res = await app.request('/orders');
+    expect(res.status).toBe(403);
+  });
+
   it('keeps concurrent requests of different tenants isolated (AsyncLocalStorage)', async () => {
     ddb.on(GetCommand).callsFake((input: { Key: { pk: string } }) => ({
       Item: {
