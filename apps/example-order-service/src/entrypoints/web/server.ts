@@ -190,6 +190,23 @@ export const app = new Hono();
 
 app.get('/healthz', (c) => c.json({ ok: true, runtimeProfile: 'experimental-web' }));
 
+// ADR-0006 benchmark only (failure isolation / memory pressure row): sandbox-only fault
+// injection. `oom` allocates until the V8 heap (default 1,024 MB on Web Functions) is exhausted
+// and the environment process dies; `throw` raises synchronously inside the handler. The route
+// does not exist outside sandbox / development.
+const env = process.env['PAAS_ENVIRONMENT'];
+if (env === 'sandbox' || env === 'development') {
+  const retained: Buffer[] = [];
+  app.get('/__fault/:kind', (c) => {
+    const kind = c.req.param('kind');
+    if (kind === 'throw') throw new Error('injected synchronous failure');
+    if (kind === 'oom') {
+      while (true) retained.push(Buffer.alloc(64 * 1024 * 1024, 1));
+    }
+    return c.json({ error: 'unknown fault kind' }, 400);
+  });
+}
+
 app.post(
   '/orders',
   route('CreateOrder', async (ctx, c) => {

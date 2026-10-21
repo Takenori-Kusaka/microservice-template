@@ -10,7 +10,7 @@
 
 - **既定は API Gateway HTTP API + Lambda Event Functions（arm64, Node.js 22, esbuild zip）。** 成熟した CDK L2、Powertools、alias / weighted routing、1 リクエスト 1 環境の障害隔離を優先する。
 - **Lambda Web Functions は `runtimeProfile: 'experimental-web'` として sandbox / staging 限定で採用候補。** 「I/O 待ちが長く active CPU 比率が低い API」「native streaming が必要な API（LLM 応答、SSE）」「Hono / Fastify をそのまま動かしたい API」で、ADR-0006 の benchmark に合格したものだけ production へ進める。
-  - 実測（2026-10-21、sandbox、48 req/s、ADR-0006「実測」）: warm p99 は Web が Event の約半分（create 56 vs 107 ms）、cold start は同程度、CPU active ratio 7.9%、1M req 当たり Web $0.49〜0.56 vs Event $1.61（API Gateway 込み）。bundle size と未計測 2 項目が残るため採用範囲は据え置き。
+  - 実測（2026-10-21、sandbox、48 req/s、ADR-0006「実測」）: warm p99 は Web が Event の約半分（create 56 vs 107 ms）、cold start は同程度、CPU active ratio 7.9%、1M req 当たり Web $0.49〜0.56 vs Event $1.61（API Gateway 込み）。failure isolation は例外・OOM 注入とも合格（他 request のエラー率 0.05%）。bundle size（3 倍）と trace 経路（OTel 直送）が残るため採用範囲は据え置き。
 - **Web Functions を今すぐ標準にしない理由**: 2026-10-12 公開直後で Node.js 24 / arm64 / 5 リージョンのみ、環境サイズ 2 vCPU / 2 GB 固定、CDK L2 未リリース（PR #39210 open）、X-Ray の Lambda セグメント非生成、WebSocket 非対応、custom domain は CloudFront 前置が必須、費用は active CPU 比率が約 24%（Event 512 MB 比）を超えると Event Functions より高くなる。[^1][^4][^6][^10][^18][^15]
 - **Lambda MicroVMs は通常 API に使用禁止。** テナント提供コード、AI エージェント sandbox、状態保持型の対話セッションのみ ADR-0007 の条件で許可する。
 - **ECS/Fargate は持続的に高負荷（目安 1,000 RPS 超が常態）または WebSocket / 長時間接続が必須の場合の比較基準。** ゼロスケールできず、中規模トラフィックの多くの API では固定費と運用負荷が不利。
