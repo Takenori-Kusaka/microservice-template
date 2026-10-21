@@ -27,6 +27,8 @@ export interface EnvironmentStageProps extends StageProps {
  */
 export class EnvironmentStage extends Stage {
   readonly platform: PlatformStack;
+  /** Present only with `experimentalWeb=true` outside production (ADR-0006 benchmark). */
+  readonly web?: OrderWebExperimentalStack;
   readonly services: {
     order: OrderServiceStack;
     worker: WorkerServiceStack;
@@ -73,6 +75,7 @@ export class EnvironmentStage extends Stage {
         ordersTableName: order.table.table.tableName,
       });
       web.addStackDependency(order);
+      this.web = web;
     }
 
     applyPlatformGuardrails(this, { config, verbose: true });
@@ -127,6 +130,29 @@ export class EnvironmentStage extends Stage {
         {
           id: 'AwsSolutions-SNS3',
           reason: 'enforceSSL is set; rule false positive on imported topics.',
+        },
+      ]);
+    }
+    if (this.web) {
+      suppressNag(this.web, [
+        {
+          id: 'AwsSolutions-IAM4',
+          reason:
+            'BucketDeployment singleton function (CDK-managed) uses AWSLambdaBasicExecutionRole; it only copies the Web Function zip into the versioned code bucket.',
+        },
+        {
+          id: 'AwsSolutions-IAM5',
+          reason:
+            'BucketDeployment needs object wildcards on the asset bucket and the code bucket; the Web Function execution role is suppressed per path in ExperimentalWebFunction.',
+        },
+        {
+          id: 'AwsSolutions-L1',
+          reason: 'BucketDeployment singleton runtime is chosen by aws-cdk-lib.',
+        },
+        {
+          id: 'AwsSolutions-S1',
+          reason:
+            'Code bucket holds only the deployment package; access is audited through CloudTrail data events (ADR-0026), not server access logs.',
         },
       ]);
     }

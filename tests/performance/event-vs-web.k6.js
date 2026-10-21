@@ -94,6 +94,7 @@ export const options = {
     'create_order_latency{scenario:steady}': ['p(99)<500'],
     'server_errors{scenario:steady}': ['rate<0.001'],
   },
+  summaryTrendStats: ['avg', 'min', 'med', 'max', 'p(90)', 'p(95)', 'p(99)'],
   tags: { target: TARGET },
 };
 

@@ -31,7 +31,7 @@ export const PRICES = {
     source: `https://aws.amazon.com/lambda/pricing/ ; ${PRICE_LIST}/AWSLambda/current/ap-northeast-1/index.json`,
     verifiedAt: '2026-10-17',
     verified: true,
-    note: 'Lambda Event Functions request charge; APN1-Request and APN1-Request-ARM are both $0.0000002 / request. Web Functions requests are $0.30 / 1M (APN1-Lambda-Web-Request-ARM) and are not modelled here.',
+    note: 'Lambda Event Functions request charge; APN1-Request and APN1-Request-ARM are both $0.0000002 / request. Web Functions requests are $0.30 / 1M (lambdaWebRequestPerMillionArm64).',
   },
   lambdaGbSecondArm64: {
     value: 0.0000133334,
@@ -120,6 +120,30 @@ export const PRICES = {
     verifiedAt: '2026-10-17',
     verified: true,
     note: 'APN1-XRay-TracesStored $0.000005 / trace. Traces retrieved / scanned are $0.50 / 1M (not modelled). First 100,000 traces stored / month free (ignored).',
+  },
+  lambdaWebRequestPerMillionArm64: {
+    value: 0.3,
+    unit: 'USD / 1M requests (Web Functions, arm64)',
+    source: `https://aws.amazon.com/lambda/pricing/ ; ${PRICE_LIST}/AWSLambda/current/ap-northeast-1/index.json`,
+    verifiedAt: '2026-10-21',
+    verified: true,
+    note: 'APN1-Lambda-Web-Request-ARM $0.0000003 / request (Price List API, 2026-10-21). Used by the ADR-0006 / M-06 comparison only.',
+  },
+  lambdaWebVcpuSecondArm64: {
+    value: 0.0000322421,
+    unit: 'USD / active vCPU-second (Web Functions, arm64)',
+    source: `https://aws.amazon.com/lambda/pricing/ ; ${PRICE_LIST}/AWSLambda/current/ap-northeast-1/index.json`,
+    verifiedAt: '2026-10-21',
+    verified: true,
+    note: 'APN1-Lambda-Web-vCPU-Second-ARM. Tokyo price; the pricing page example (US East) shows $0.0000276944. Billed on EnvironmentCPUTime.',
+  },
+  lambdaWebMemoryGbSecondArm64: {
+    value: 0.0000042688,
+    unit: 'USD / GB-second of environment memory (Web Functions, arm64)',
+    source: `https://aws.amazon.com/lambda/pricing/ ; ${PRICE_LIST}/AWSLambda/current/ap-northeast-1/index.json`,
+    verifiedAt: '2026-10-21',
+    verified: true,
+    note: 'APN1-Lambda-Web-Memory-GB-Second-ARM. Tokyo price; US East example $0.0000036667. Billed for the whole environment lifetime (EnvironmentActiveTime), including idle time between requests.',
   },
 } as const satisfies Record<string, Price>;
 

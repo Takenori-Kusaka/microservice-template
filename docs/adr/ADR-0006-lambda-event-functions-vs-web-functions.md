@@ -72,12 +72,13 @@ Event Functions は request $0.20 / 百万 + duration $0.0000166667 / GB 秒（x
 
 ## Evidence
 
-benchmark protocol（`tests/performance/event-vs-web.k6.js`、`TARGET=event|web` で同一 workload を両 compute に送る）。同一業務ロジック、同一 DynamoDB テーブル（`OrderWebExperimentalStack` は `OrderServiceStack` の table を参照）で実施する。負荷値と合格閾値は本テンプレートの初期値。計測で確定: 初回 benchmark の結果（cold / warm p99、throttle 率、request 当たり費用、CPU active ratio）を本 ADR に記録し、閾値を見直す（docs/decision/template-defaults.md#計測で確定する項目 M-06、2026-10-21 時点でハーネスは作成済み・未実行）。
+benchmark protocol（`tests/performance/event-vs-web.k6.js`、`TARGET=event|web` で同一 workload を両 compute に送る）。同一業務ロジック、同一 DynamoDB テーブル（`OrderWebExperimentalStack` は `OrderServiceStack` の table を参照）で実施する。負荷値と合格閾値は本テンプレートの初期値。計測で確定: 初回 benchmark の結果（cold / warm p99、throttle 率、request 当たり費用、CPU active ratio）を本 ADR に記録し、閾値を見直す（docs/decision/template-defaults.md#計測で確定する項目 M-06、2026-10-21 に縮小プロファイルで初回実測、下記「実測」）。
 
 ハーネス作成時に一次情報で確認した Web Functions の制約（2026-10-21）:
 
 - `IamAuth` endpoint は SigV4（service 名 `lambda`、endpoint の Region）で署名し、body の有無にかかわらず `X-Amz-Content-SHA256` header が必須。Lambda は署名検証後に `Authorization` header を**削除してから**アプリへ転送するため、アプリ層の bearer token 認証は CloudFront OAC 経由でしか成立しない。[^267] benchmark では sandbox claims を署名対象の `x-paas-sandbox-claims` header で運ぶ（`server.ts`）。
 - Web Functions の request metrics（`ExecutedRequests`、`HTTPResponseStatusClass4XX/5XX`）は home Region に集約され、環境 metrics は `EnvironmentActiveTime` / `EnvironmentCPUTime`（ms、Sum）、`EnvironmentMaxMemoryUsage`、`EnvironmentConcurrentRequests`。throttle は `AWS/Lambda/Web/Usage` 名前空間に Region 別・原因別（account RPS / endpoint rateLimit / account arm64 vCPU / endpoint maxEnvironments）で出るが、`EndpointConcurrentInitThrottle` の 429 はどの throttle metric にも計上されない。metrics に revision dimension はない。[^268] `collect-web-metrics.mjs` はこの表に従って収集し、CPU active ratio = `EnvironmentCPUTime / EnvironmentActiveTime` を算出する。
+- Web Functions のコードは S3 の .zip のみで、bucket は **versioning 必須**、bucket policy で `lambda.amazonaws.com` に `s3:GetObject` / `s3:GetObjectVersion` を `aws:SourceArn` = `web-function/<name>/revision/*` 条件付きで許可する必要がある。Lambda は revision 作成時にこのアクセスを検査し、revision は object version に pin される。object version か bucket policy を後から失うと revision は永続的な `Failed` になり、endpoint は 409 `Platform.RevisionNotActive` を返す。Lambda は server が listen を始めたかを検証しないため、deploy 後の test request が必須。[^269] 実デプロイ（2026-10-21）では CDK bootstrap の assets bucket をそのまま参照して `CreateWebFunctionRevision` が `ValidationException`（service principal に GetObject 権限なし）で失敗したため、`ExperimentalWebFunction` は専用の versioned bucket を持ち、`BucketDeployment`（`extract: false`、`prune: false`）で zip を複製する。bootstrap bucket の policy は CDKToolkit の所有物であり、template からは変更しない。 続く初回 request は 502 `Runtime.ImportCodeError`（`/var/task/index.js` が無い）で失敗した。runtime は既定で `index.js` を読み、ES module の `index.mjs` は `AWS_LAMBDA_NODEJS_ENTRYPOINT` で指定する必要がある（同 [^269]）。`lambda-web-error-type` response header と `.local` log group の `platform.initReport` で原因を特定できた。
 
 | 項目                                 | 計測方法                                                              | 合格条件（Web Functions 採用）                              |
 | ------------------------------------ | --------------------------------------------------------------------- | ----------------------------------------------------------- |
@@ -88,6 +89,23 @@ benchmark protocol（`tests/performance/event-vs-web.k6.js`、`TARGET=event|web`
 | deployment artifact size / time      | zip サイズと deploy 所要時間                                          | Event 版の 1.5 倍以内                                       |
 | trace / log 一貫性                   | `correlationId` で全 request を検索、revision 識別子のログ付与率      | 欠落 0%                                                     |
 | failure isolation と memory pressure | 1 リクエストで OOM / 例外を注入し、同環境の他リクエストへの影響を計測 | 他リクエストのエラー率増加が 1% 未満                        |
+
+### 実測（2026-10-21、sandbox ap-northeast-1、縮小プロファイル）
+
+詳細と出典ファイルは `tests/performance/results/README.md` §4（E-280〜E-283）。同一 workload 14,400 req（POST / GET 1:1、steady 30 RPS 3 分 + burst 0→100 RPS 2 分、48 req/s）。Event 側はアカウント Lambda 同時実行 quota 10 の制約下。
+
+| 合格条件                                        | Event Functions                                     | Web Functions                                | 判定                                                                                            |
+| ----------------------------------------------- | --------------------------------------------------- | -------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| warm p99 が Event 版以下                        | create p99 107.0 ms / list 85.2 ms                  | create **56.0 ms** / list **35.1 ms**        | 合格                                                                                            |
+| cold p99 が Event 版の 1.2 倍以内               | Init p50 ≈ 390 ms、max 512 ms（10 回 / 12,978 inv） | 環境 init 434〜536 ms（3 回 / 14,401 req）   | 合格（max 比 1.05 倍）                                                                          |
+| throttle 率が Event 版以下                      | 6.83%（burst 時 503、quota 10）                     | 0%（環境 max 3、throttle metric 0）          | 合格（Event 側は quota 制約。引き上げ後に再計測）                                               |
+| request 当たり費用 Event 版比 20% 以上削減      | $1.61 / 1M（API Gateway 込み）、Lambda のみ $0.52   | $0.49〜0.56 / 1M（消費 memory の下限〜上限） | front door 込みでは合格、Lambda 単体比では同水準。48 req/s の値で、低負荷では環境生存課金が効く |
+| CPU active ratio < 40% なら Web 有利            | （`Duration` 課金）                                 | **7.9%**（CPU 66.5 s / active 841.3 s）      | Web 有利                                                                                        |
+| artifact size / deploy 時間 Event の 1.5 倍以内 | 0.94 MB / full deploy ≈ 7 分                        | 2.86 MB / 77 秒（更新 26 秒）                | **不合格**（size 3 倍。AWS SDK を同梱するため）。deploy 時間は合格                              |
+| trace / log 一貫性                              | —                                                   | —                                            | 未計測（M-06 残項目）                                                                           |
+| failure isolation / memory pressure             | —                                                   | —                                            | 未計測（M-06 残項目）                                                                           |
+
+実測で確定した運用上の差分: Web Functions には request latency の CloudWatch metric がなく（client 側か application metric で測る）、`Authorization` header は `IamAuth` で剥がされ、コードは専用 versioned bucket と `AWS_LAMBDA_NODEJS_ENTRYPOINT` が必要だった（上記）。本 ADR は bundle size と未計測 2 項目が残るため `proposed` のまま。次の run は quota 引き上げ後の ADR 既定プロファイル（50 RPS 10 分 + 0→200 RPS）で、2 回目以降の値（Lambda が学習した dynamic concurrency）を採用する。
 
 合格した API は結果を本 ADR へ追記し、個別 ADR で採用範囲を固定する。不合格または制約受容不可の場合は本 ADR を「Event Functions 固定」として `accepted` に変更する。
 
@@ -127,6 +145,8 @@ benchmark protocol（`tests/performance/event-vs-web.k6.js`、`TARGET=event|web`
 [^267]: [Lambda Web Function endpoint access control — Signing requests](https://docs.aws.amazon.com/lambda/latest/dg/web-functions-endpoint-access-control.html)（参照日 2026-10-21。「sign them yourself with SigV4 or SigV4a, using the service name `lambda`」「Every signed request must include the `X-Amz-Content-SHA256` header」「After Lambda validates the SigV4 or SigV4a signature, it removes the `Authorization` header before forwarding the request to your function」）
 
 [^268]: [Using CloudWatch metrics with Lambda Web Functions](https://docs.aws.amazon.com/lambda/latest/dg/web-functions-monitoring-metrics.html)（参照日 2026-10-21）
+
+[^269]: [Deploying Web Function code from Amazon S3](https://docs.aws.amazon.com/lambda/latest/dg/web-functions-code-s3.html)（参照日 2026-10-21。「The bucket must have S3 versioning enabled」「The bucket policy must grant the Lambda service principal (`lambda.amazonaws.com`) `s3:GetObject` and `s3:GetObjectVersion` permissions. Scope the policy with an `aws:SourceArn` condition that matches the revision ARN pattern」「The `Failed` state is permanent」「Lambda does not verify that your server starts listening」）
 
 [^106]: [aws-cdk-lib.aws_codedeploy.LambdaDeploymentConfig](https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_codedeploy.LambdaDeploymentConfig.html)（参照日 2026-10-17）
 

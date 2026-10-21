@@ -17,7 +17,9 @@
     "yaml": "^2.8.0"
   },
   "devDependencies": {
+    "@aws-crypto/sha256-js": "^5.2.0",
     "@paas/eslint-config": "workspace:*",
+    "@smithy/signature-v4": "^5.0.0",
     "@types/node": "^22.19.0",
     "eslint": "^9.39.5",
     "typescript": "^5.9.3",
