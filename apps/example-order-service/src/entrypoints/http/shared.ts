@@ -4,7 +4,13 @@ import { logMetrics } from '@aws-lambda-powertools/metrics/middleware';
 import { captureLambdaHandler } from '@aws-lambda-powertools/tracer/middleware';
 import type { APIGatewayProxyResultV2, Context as LambdaContext } from 'aws-lambda';
 import { contextlessErrorResponse, errorResponse, type JsonResponse } from '@paas/api-contracts';
-import { createTelemetry, recordRequest, requestSummary } from '@paas/observability';
+import {
+  createTelemetry,
+  isolationViolationReason,
+  recordIsolationViolation,
+  recordRequest,
+  requestSummary,
+} from '@paas/observability';
 import {
   contextFromHttpApiEvent,
   runWithContext,
@@ -41,6 +47,11 @@ export function apiHandler(operation: string, impl: ApiImplementation) {
       ctx = contextFromHttpApiEvent(event, lambdaContext, { service: SERVICE_ID, operation });
     } catch (error) {
       telemetry.logger.warn('request rejected before context binding', { error, operation });
+      const reason = isolationViolationReason(error);
+      if (reason) {
+        recordIsolationViolation(telemetry.metrics, reason);
+        telemetry.metrics.publishStoredMetrics();
+      }
       return contextlessErrorResponse(error, event.requestContext.requestId);
     }
     return runWithContext(ctx, async () => {
@@ -50,6 +61,8 @@ export function apiHandler(operation: string, impl: ApiImplementation) {
         response = await impl(ctx, event);
       } catch (error) {
         const mapped = errorResponse(error, ctx);
+        const reason = isolationViolationReason(error);
+        if (reason) recordIsolationViolation(telemetry.metrics, reason);
         if (mapped.apiError.httpStatus >= 500) {
           telemetry.logger.error('request failed', { error });
         } else {

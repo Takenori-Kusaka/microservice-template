@@ -115,6 +115,7 @@ sandbox / development では Lambda authorizer が `Authorization: Bearer <base6
 ## ドキュメント
 
 - [docs/microservice-guidelines.md](docs/microservice-guidelines.md) — 設計指針書（全 20 章、エビデンス台帳付き）
+- [docs/microservice-guidelines-resilience-security.md](docs/microservice-guidelines-resilience-security.md) — 第21章 破壊と再生・侵入耐性（Chaos / FIS、影響範囲の限定、GuardDuty・CloudTrail による侵入検出、トレーサビリティ、AI 時代の攻撃への追加策）と [security-incident runbook](docs/runbooks/security-incident.md)
 - [docs/adr/](docs/adr/README.md) — ADR-0001〜0020
 - [docs/decision/](docs/decision/) — 要件→アーキテクチャの質問票、決定木、技術選定根拠、API compute 比較、[最新技術での再検討](docs/decision/latest-tech-reassessment.md)（Bun、API Gateway 非経由、ログ一本化、ローカル仮想環境）
 - [docs/review/](docs/review/README.md) — 要求仕様書 / 設計指針書 / 設計書 / リポジトリのレビューチェックリスト、アンチパターン集

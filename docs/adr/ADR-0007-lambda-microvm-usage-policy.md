@@ -37,7 +37,7 @@ AWS 自身が MicroVM を「user or AI-produced untrusted code を実行する p
 - MicroVM を使う機能は、専用の Service Stack と専用 execution role を持ち、pool datastore へ直接アクセスできない。結果はサービスの公開 API またはイベント経由で返す。
 - MicroVM セッションは `ExecutionContext.tenantId` 単位で生成し、テナント間でセッションを共有しない。AWS も「各テナントを隔離されたカーネル、メモリ空間、ディスク状態で実行」する用途を示している。[^23]
 - 最大実行時間は機能ごとに上限（本テンプレート既定 15 分、AWS 上限 8 時間[^42]）を `ServiceManifest` に明記し、idle policy による自動 suspend[^68]と、上限到達時の terminate、課金 alarm を必須とする。既定値（例示値）: 15 分。AWS 上限 8 時間の内側で、課金暴走と放置セッションを抑えるため Lambda Event Functions の timeout 上限と同じ値に揃えた設計判断で、外部出典に基づかない。調整: docs/decision/template-defaults.md#既定値レジスタ（TD-05、PoC M-08 のセッション時間分布をもとに見直す）。
-- MicroVM の outbound network は既定で遮断し、許可する宛先（例: サービス自身の公開 API、パッケージレジストリの proxy）を egress 設定で明示する。[^68]
+- MicroVM の outbound network は **AWS の既定では public internet に開いている**（公式仕様、確認日 2026-10-18[^68]）。本テンプレートはこれを受け入れず、MicroVM を作る Service Stack は egress を VPC / NetworkConnector 経由に固定して許可する宛先（例: サービス自身の公開 API、パッケージレジストリの proxy）だけを明示する（第21章 21.3 の containment 要件。`PlatformGuardrails` での検査は ADR-0026 の実装項目）。
 - MicroVM へ渡す入力と MicroVM から受け取る出力は `@paas/event-contracts` と同じ envelope（`tenantId`, `correlationId`）を持ち、ADR-0015 の相関 ID 検索の対象に含める。
 - `RunMicrovm` の API rate（既定 5 TPS）[^42]を超えるセッション開始が見込まれる場合は、事前に quota 引き上げを申請する。
 

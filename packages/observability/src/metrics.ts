@@ -63,3 +63,37 @@ export function recordRequest(
 }
 
 export { MetricUnit, MetricResolution };
+
+/**
+ * Emits `TenantIsolationViolationAttempt` (guideline ch.21 §21.4 detection signal). Call it
+ * whenever a request or message is rejected because its tenant binding is missing, invalid,
+ * forged (e.g. a cursor from another tenant) or mismatched. The metric feeds the detection
+ * alarm; the structured log line carries the details for forensics (no PII in the metric).
+ */
+export function recordIsolationViolation(
+  metrics: Metrics,
+  reason: 'missing-tenant' | 'invalid-tenant' | 'foreign-cursor' | 'envelope-tenant' | 'other',
+): void {
+  metrics.addMetadata('isolationViolationReason', reason);
+  metrics.addMetric(StandardMetrics.TenantIsolationViolationAttempt, MetricUnit.Count, 1);
+}
+
+/** Classifies an error as an isolation-violation signal, or undefined when it is not one. */
+export function isolationViolationReason(
+  error: unknown,
+): 'missing-tenant' | 'invalid-tenant' | 'foreign-cursor' | 'envelope-tenant' | undefined {
+  if (typeof error !== 'object' || error === null) return undefined;
+  const e = error as { code?: unknown; name?: unknown; details?: unknown; message?: unknown };
+  if (e.code === 'TENANT_CONTEXT_MISSING') return 'missing-tenant';
+  if (e.name === 'EventValidationError' && String(e.message).includes('tenantId'))
+    return 'envelope-tenant';
+  if (
+    Array.isArray(e.details) &&
+    e.details.some((d) =>
+      (d as { message?: string }).message?.includes('does not belong to this tenant'),
+    )
+  ) {
+    return 'foreign-cursor';
+  }
+  return undefined;
+}

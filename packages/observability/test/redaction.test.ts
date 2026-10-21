@@ -37,3 +37,23 @@ describe('redaction', () => {
     );
   });
 });
+
+describe('isolation violation classification', () => {
+  it('classifies tenant-context, foreign-cursor and envelope errors', async () => {
+    const { isolationViolationReason } = await import('../src/metrics.js');
+    expect(isolationViolationReason({ code: 'TENANT_CONTEXT_MISSING' })).toBe('missing-tenant');
+    expect(
+      isolationViolationReason({
+        details: [{ path: 'cursor', message: 'cursor does not belong to this tenant' }],
+      }),
+    ).toBe('foreign-cursor');
+    expect(
+      isolationViolationReason(
+        Object.assign(new Error('event validation failed for x: tenantId Invalid'), {
+          name: 'EventValidationError',
+        }),
+      ),
+    ).toBe('envelope-tenant');
+    expect(isolationViolationReason(new Error('boom'))).toBeUndefined();
+  });
+});

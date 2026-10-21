@@ -23,7 +23,13 @@ import {
   jsonResponse,
   type JsonResponse,
 } from '@paas/api-contracts';
-import { createTelemetry, recordRequest, requestSummary } from '@paas/observability';
+import {
+  createTelemetry,
+  isolationViolationReason,
+  recordIsolationViolation,
+  recordRequest,
+  requestSummary,
+} from '@paas/observability';
 import {
   Deadline,
   HEADERS,
@@ -132,6 +138,11 @@ function route(operation: string, impl: Impl): (c: Context) => Promise<Response>
     try {
       ctx = contextFromRequest(c.req.raw.headers, operation);
     } catch (error) {
+      const reason = isolationViolationReason(error);
+      if (reason) {
+        recordIsolationViolation(telemetry.metrics, reason);
+        telemetry.metrics.publishStoredMetrics();
+      }
       return toResponse(errorResponse(error, { requestId: 'n/a', correlationId: 'n/a' }));
     }
     return runWithContext(ctx, async () => {
@@ -141,6 +152,8 @@ function route(operation: string, impl: Impl): (c: Context) => Promise<Response>
         response = await impl(ctx, c);
       } catch (error) {
         const mapped = errorResponse(error, ctx);
+        const reason = isolationViolationReason(error);
+        if (reason) recordIsolationViolation(telemetry.metrics, reason);
         if (mapped.apiError.httpStatus >= 500) telemetry.logger.error('request failed', { error });
         response = mapped;
       }

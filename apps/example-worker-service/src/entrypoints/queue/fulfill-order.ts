@@ -7,7 +7,13 @@ import { captureLambdaHandler } from '@aws-lambda-powertools/tracer/middleware';
 import middy from '@middy/core';
 import type { Context as LambdaContext, SQSEvent, SQSRecord } from 'aws-lambda';
 import { eventCatalog, fromSqsRecord, type EventEnvelope } from '@paas/event-contracts';
-import { MetricUnit, StandardMetrics, createTelemetry } from '@paas/observability';
+import {
+  MetricUnit,
+  StandardMetrics,
+  createTelemetry,
+  isolationViolationReason,
+  recordIsolationViolation,
+} from '@paas/observability';
 import { contextFromEnvelope, runWithContext, type ExecutionContext } from '@paas/runtime-context';
 import {
   processOrderCreated,
@@ -57,7 +63,14 @@ function productionDeps(): HandlerDeps {
  */
 export function createRecordHandler(deps: HandlerDeps) {
   return async (record: SQSRecord, lambdaContext: LambdaContext): Promise<ProcessOutcome> => {
-    const envelope: EventEnvelope = fromSqsRecord(eventCatalog, record);
+    let envelope: EventEnvelope;
+    try {
+      envelope = fromSqsRecord(eventCatalog, record);
+    } catch (error) {
+      const reason = isolationViolationReason(error);
+      if (reason) recordIsolationViolation(telemetry.metrics, reason);
+      throw error;
+    }
     const attempt = Number(record.attributes.ApproximateReceiveCount ?? '1');
     const ctx: ExecutionContext = contextFromEnvelope(envelope, lambdaContext, {
       service: SERVICE_ID,
