@@ -182,3 +182,30 @@ export const exampleProfile: WorkloadProfile = {
   storage: { gbPerTenant: 0.5 },
   sharedMonthlyUsd: 400,
 };
+
+/**
+ * ADR-0005 / M-03: monthly request volume at which an Application Load Balancer (hourly + LCU
+ * charges) costs the same as API Gateway HTTP API (per-request charge). Below the break-even the
+ * HTTP API is cheaper; above it the ALB's fixed cost is amortised. The LCU term is a floor
+ * (`lcuHours` LCU-hours per month; 1 LCU covers 25 new connections/s, 3,000 active
+ * connections/min, 1 GB/h or 1,000 rule evaluations/s, whichever dimension is highest).
+ * Lambda-side auth / rate limiting that the ALB path needs is NOT included (ADR-0005 短所).
+ */
+export function albVsHttpApiBreakEven(
+  hoursPerMonth = 730,
+  lcuHours = hoursPerMonth,
+): {
+  albFixedUsdPerMonth: number;
+  breakEvenRequestsPerMonth: number;
+  breakEvenAverageRps: number;
+} {
+  const albFixedUsdPerMonth =
+    PRICES.albHour.value * hoursPerMonth + PRICES.albLcuHour.value * lcuHours;
+  const breakEvenRequestsPerMonth =
+    albFixedUsdPerMonth / (PRICES.apiGatewayHttpPerMillion.value / 1e6);
+  return {
+    albFixedUsdPerMonth,
+    breakEvenRequestsPerMonth,
+    breakEvenAverageRps: breakEvenRequestsPerMonth / (hoursPerMonth * 3600),
+  };
+}

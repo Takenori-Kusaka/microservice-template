@@ -145,6 +145,22 @@ export const PRICES = {
     verified: true,
     note: 'APN1-Lambda-Web-Memory-GB-Second-ARM. Tokyo price; US East example $0.0000036667. Billed for the whole environment lifetime (EnvironmentActiveTime), including idle time between requests.',
   },
+  albHour: {
+    value: 0.0243,
+    unit: 'USD / Application Load Balancer-hour',
+    source: `https://aws.amazon.com/elasticloadbalancing/pricing/ ; ${PRICE_LIST}/AWSELB/current/ap-northeast-1/index.json`,
+    verifiedAt: '2026-10-21',
+    verified: true,
+    note: 'APN1-LoadBalancerUsage "$0.0243 per Application LoadBalancer-hour (or partial hour)" (Price List API, 2026-10-21). Used for the ADR-0005 / M-03 break-even only.',
+  },
+  albLcuHour: {
+    value: 0.008,
+    unit: 'USD / ALB capacity unit-hour',
+    source: `https://aws.amazon.com/elasticloadbalancing/pricing/ ; ${PRICE_LIST}/AWSELB/current/ap-northeast-1/index.json`,
+    verifiedAt: '2026-10-21',
+    verified: true,
+    note: 'APN1-LCUUsage "$0.008 per used Application load balancer capacity unit-hour". One LCU = 25 new connections/s, 3,000 active connections/min, 1 GB/h processed bytes, or 1,000 rule evaluations/s (whichever is highest; ELB pricing page).',
+  },
 } as const satisfies Record<string, Price>;
 
 export type PriceKey = keyof typeof PRICES;

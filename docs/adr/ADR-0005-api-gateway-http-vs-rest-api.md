@@ -58,7 +58,7 @@ HTTP API のみが持つ機能は、ネイティブ JWT authorizer、automatic d
 
 ### B. Application Load Balancer + Lambda
 
-- 長所: 固定料金で高トラフィック時に request 単価が下がる（計測で確定: ALB の時間課金 + LCU 課金と HTTP API の request 課金の break-even RPS は、`tools/cost-model/src/prices.ts` に ALB 単価を追加して `pnpm cost-model` で試算する。docs/decision/template-defaults.md#計測で確定する項目 M-03、現在は未計測）。
+- 長所: 固定料金で高トラフィック時に request 単価が下がる（計測で確定: ALB の時間課金 + LCU 課金と HTTP API の request 課金の break-even RPS は、`tools/cost-model/src/prices.ts` に ALB 単価を追加して `pnpm cost-model` で試算する。docs/decision/template-defaults.md#計測で確定する項目 M-03）。2026-10-21 試算: ALB $0.0243/h + 1 LCU $0.008/h（Price List API、東京）= $23.58/月に対し HTTP API $1.29/1M req のため、break-even は 18.3M req/月 ≈ 平均 7.0 RPS（`albVsHttpApiBreakEven()`、`pnpm cost-model`）。ALB 経路に必要な Lambda 側の認証・rate limit 費用を加えると break-even はさらに高くなる。
 - 短所: JWT authorizer、throttling、usage plan がなく、認証と rate limit を Lambda 側で実装する必要がある。中規模トラフィックでは ALB の固定費が不利。Lambda Web Functions の endpoint と比較する場合に ADR-0006 で再検討する。
 
 ### C. Lambda Function URL + CloudFront

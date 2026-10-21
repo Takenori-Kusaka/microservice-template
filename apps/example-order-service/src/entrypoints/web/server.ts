@@ -202,7 +202,14 @@ app.post(
     // benchmark (M-06) the same DynamoDB-backed wrapper must be applied around the use case.
     // Powertools documents no Web Functions guidance for Idempotency (ADR-0006, checked 2026-10-17;
     // docs/decision/api-compute-selection.md §10.3), so M-06 must verify it in the Web runtime.
-    const request = CreateOrderRequestSchema.parse(await c.req.json());
+    let body: unknown;
+    try {
+      body = await c.req.json();
+    } catch {
+      // Same contract as the Event Functions handler: malformed JSON is a 400, not a 500.
+      throw ApiError.validation([{ path: 'body', message: 'invalid JSON' }]);
+    }
+    const request = CreateOrderRequestSchema.parse(body);
     const order = await createOrderUseCase({ repository }, ctx, request);
     const { tenantId: _tenant, ...publicOrder } = order;
     return jsonResponse(201, publicOrder, ctx, { location: `/orders/${order.orderId}` });

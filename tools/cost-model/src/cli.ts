@@ -5,7 +5,12 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { computeCost, exampleProfile, type WorkloadProfile } from './model.js';
+import {
+  albVsHttpApiBreakEven,
+  computeCost,
+  exampleProfile,
+  type WorkloadProfile,
+} from './model.js';
 import { PRICES, stalePrices } from './prices.js';
 
 function option(name: string): string | undefined {
@@ -32,6 +37,10 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1
     ? (JSON.parse(readFileSync(profilePath, 'utf8')) as WorkloadProfile)
     : exampleProfile;
   const report = computeCost(profile);
+  const be = albVsHttpApiBreakEven();
+  console.log(
+    `ALB vs HTTP API break-even (M-03): ALB fixed ${be.albFixedUsdPerMonth.toFixed(2)} USD/month (730 h + 1 LCU) = ${(be.breakEvenRequestsPerMonth / 1e6).toFixed(1)}M requests/month = ${be.breakEvenAverageRps.toFixed(1)} RPS average`,
+  );
   const fmt = (n: number) => n.toLocaleString('en-US', { maximumFractionDigits: 2 });
 
   console.log('\nMonthly cost by component (USD)');

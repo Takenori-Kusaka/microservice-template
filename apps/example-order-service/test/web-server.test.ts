@@ -66,6 +66,19 @@ describe('experimental web server (Hono) — same contract as the Event Function
     expect(input.TransactItems?.[0]?.Put?.Item?.['pk']).toBe('TENANT#beta');
   });
 
+  it('returns 400 (not 500) for a malformed JSON body, like the Event Functions handler', async () => {
+    const res = await app.request('/orders', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${token({ tenantId: 'acme' })}`,
+        'idempotency-key': 'web-create-bad-json',
+        'content-type': 'application/json',
+      },
+      body: '{"customerRef": "fault", "lines": [ {',
+    });
+    expect(res.status).toBe(400);
+  });
+
   it('rejects a request with neither Authorization nor the sandbox claims header', async () => {
     const res = await app.request('/orders');
     expect(res.status).toBe(403);

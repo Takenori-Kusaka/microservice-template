@@ -228,6 +228,11 @@ export class ExperimentalWebFunction extends Construct {
           // identifier env var per revision (web-functions-monitoring-metrics.html). The code object
           // key is the content hash of the bundle, so every new bundle gets a new value.
           PAAS_DEPLOYMENT_VERSION: codeKey,
+          // Web Functions create no X-Ray segment (web-functions-monitoring.html); with the tracer
+          // enabled, Powertools / X-Ray SDK logged "Failed to get the current sub/segment from the
+          // context" at ERROR level several times per request (observed 2026-10-21). Traces go
+          // through OTel instead (ADR-0022). Powertools env var table: POWERTOOLS_TRACE_ENABLED.
+          POWERTOOLS_TRACE_ENABLED: 'false',
           ...(props.environment ?? {}),
         },
         telemetryConfig: {
