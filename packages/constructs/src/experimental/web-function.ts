@@ -224,6 +224,10 @@ export class ExperimentalWebFunction extends Construct {
           // The runtime loads /var/task/index.js unless told otherwise (web-functions-code-s3.html,
           // "Entry file"); the esbuild bundle is an ES module named index.mjs.
           AWS_LAMBDA_NODEJS_ENTRYPOINT: 'index.mjs',
+          // Web Function metrics and logs carry no revision dimension; AWS recommends a build
+          // identifier env var per revision (web-functions-monitoring-metrics.html). The code object
+          // key is the content hash of the bundle, so every new bundle gets a new value.
+          PAAS_DEPLOYMENT_VERSION: codeKey,
           ...(props.environment ?? {}),
         },
         telemetryConfig: {
